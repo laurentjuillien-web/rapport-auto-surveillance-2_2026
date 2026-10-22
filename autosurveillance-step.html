@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Autosurveillance STEP - Saisie Terrain (Laurent Juillien)</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- jsPDF officiel pour la génération PDF vectorielle cliente -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* Optimisations mobiles tactiles */
+    input, select, textarea, button {
+      touch-action: manipulation;
+    }
+    .font-mono-numbers {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col pb-12 selection:bg-sky-500 selection:text-white">
+
+  <!-- En-tête Principal de l'Application -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
+    <div class="max-w-5xl mx-auto px-4 py-3 sm:py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-emerald-500 flex items-center justify-center text-white shadow-inner">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-black tracking-tight leading-none text-white">
+            Autosurveillance STEP <span class="text-sky-400 font-bold text-xs uppercase px-1.5 py-0.5 rounded bg-sky-950 border border-sky-800 ml-1">Terrain 24h</span>
+          </h1>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Débitmètres, préleveurs asservis &amp; photos certifiées
+          </p>
+        </div>
+      </div>
+
+      <!-- Actions d'en-tête -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="btnExemple"
+          class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 font-medium transition cursor-pointer"
+          title="Charger un jeu de données complet de démonstration"
+        >
+          Exemple test
+        </button>
+        <button
+          type="button"
+          id="btnResetForm"
+          class="text-xs text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+          title="Réinitialiser le formulaire"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenu Principal -->
+  <main class="max-w-5xl mx-auto px-4 py-6 w-full flex-1">
+    
+    <form id="autosurveillanceForm" class="space-y-6" novalidate>
+      
+      <!-- 1. INFORMATIONS GÉNÉRALES -->
+      <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+          <div class="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 flex items-center justify-center font-bold text-sm">
+            1
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">En-tête &amp; Informations Générales</h2>
+            <p class="text-xs text-slate-500">Identification de l'ouvrage et contexte du bilan d'autosurveillance</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Nom de la STEP -->
+          <div>
+            <label for="nomStep" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Nom de la Station d'Épuration (STEP) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="nomStep"
+              name="nomStep"
+              placeholder="ex: STEP des Trois Rivières (30 000 EH)"
+              class="w-full px-3.5 py-2.5 text-sm sm:text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
+              required
+            >
+            <p id="err-nomStep" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+          </div>
+
+          <!-- Date de l'autosurveillance -->
+          <div>
+            <label for="dateAutosurveillance" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Date de l'Autosurveillance <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="dateAutosurveillance"
+              name="dateAutosurveillance"
+              class="w-full px-3.5 py-2.5 text-sm sm:text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
+              required
+            >
+            <p id="err-dateAutosurveillance" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+          </div>
+
+          <!-- Technicien -->
+          <div>
+            <label for="technicienNom" class="block text-xs font-semibold text-slate-600 mb-1">
+              Technicien de traitement <span class="text-slate-400 text-[11px] font-normal">(optionnel)</span>
+            </label>
+            <input
+              type="text"
+              id="technicienNom"
+              name="technicienNom"
+              placeholder="ex: Laurent Juillien"
+              class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
+            >
+          </div>
+
+          <!-- Météo -->
+          <div>
+            <label for="meteo" class="block text-xs font-semibold text-slate-600 mb-1">
+              Conditions météo sur 24h <span class="text-slate-400 text-[11px] font-normal">(optionnel)</span>
+            </label>
+            <select
+              id="meteo"
+              name="meteo"
+              class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer text-slate-800 font-medium"
+            >
+              <option value="Soleil" selected>Soleil</option>
+              <option value="Pluie">Pluie</option>
+              <option value="Neige">Neige</option>
+              <option value="Orage">Orage</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 & 3. BILANS ENTRÉE & SORTIE (Côte à côte sur grand écran) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- 2. BILAN ENTRÉE -->
+        <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border-2 border-sky-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-sky-100">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-sm">
+                  2
+                </div>
+                <div>
+                  <h2 class="text-base font-bold text-sky-950">Bilan Entrée</h2>
+                  <p class="text-xs text-sky-700">Prélèvement Eaux Brutes</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-1 rounded bg-sky-100 text-sky-800 border border-sky-200 uppercase">
+                Point Entrée
+              </span>
+            </div>
+
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Date prélèvement -->
+                <div>
+                  <label for="entreeDate" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Date prélèvement <span class="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="entreeDate"
+                    name="entreeDate"
+                    class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
+                    required
+                  >
+                  <p id="err-entreeDate" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+                </div>
+
+                <!-- Heure relève -->
+                <div>
+                  <label for="entreeHeure" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Heure relève <span class="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    id="entreeHeure"
+                    name="entreeHeure"
+                    class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50"
+                    required
+                  >
+                  <p id="err-entreeHeure" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+                </div>
+              </div>
+
+              <!-- Température au préleveur / eau prélevée -->
+              <div>
+                <label for="entreeTemperature" class="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span id="labelEntreeTemperature">Température au préleveur (°C) <span class="text-rose-500">*</span></span>
+                  <span id="targetEntreeTemperature" class="text-[11px] text-slate-400">Cible : [2°C à 5°C]</span>
+                </label>
+                <div class="relative">
+                  <input
+                    type="number"
+                    step="0.1"
+                    id="entreeTemperature"
+                    name="entreeTemperature"
+                    placeholder="ex: 3.8"
+                    class="w-full pl-3.5 pr-12 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono-numbers bg-slate-50/50"
+                    required
+                  >
+                  <span class="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">°C</span>
+                </div>
+                <p id="err-entreeTemperature" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+              </div>
+
+              <!-- Débitmètre Entrée : Présence & Débit cumulé ou temps de marche -->
+              <div class="p-3 bg-sky-50/70 border border-sky-200 rounded-xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-sky-900">
+                    Débitmètre présent en Entrée ? <span class="text-rose-500">*</span>
+                  </span>
+                  <div class="inline-flex rounded-lg border border-sky-300 p-0.5 bg-white shadow-xs">
+                    <button type="button" id="btnEntreeDebimetreOui" class="px-2.5 py-1 text-xs font-bold rounded-md bg-sky-600 text-white shadow-xs cursor-pointer">
+                      OUI
+                    </button>
+                    <button type="button" id="btnEntreeDebimetreNon" class="px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer">
+                      NON
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Si OUI débitmètre -->
+                <div id="entreeDebimetreOuiBox">
+                  <label for="entreeDebit" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                    Débit cumulé passé sur 24 heures (m³) <span class="text-rose-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      id="entreeDebit"
+                      name="entreeDebit"
+                      placeholder="ex: 4850.5"
+                      class="w-full pl-3.5 pr-12 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono-numbers bg-white"
+                      required
+                    >
+                    <span class="absolute right-3.5 top-2 text-xs font-bold text-slate-400">m³</span>
+                  </div>
+                  <p id="err-entreeDebit" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+                </div>
+
+                <!-- Si NON débitmètre (estimation pompes) -->
+                <div id="entreeDebimetreNonBox" class="hidden space-y-2 pt-1 border-t border-sky-200">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label for="entreeTempsMarchePompes" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Temps de marche (h) <span class="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        id="entreeTempsMarchePompes"
+                        placeholder="ex: 14.5"
+                        class="w-full px-2.5 py-1.5 text-xs rounded-xl font-mono-numbers border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      >
+                    </div>
+                    <div>
+                      <label for="entreeDebitPompeNominal" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Débit pompe (m³/h)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        id="entreeDebitPompeNominal"
+                        placeholder="ex: 120"
+                        class="w-full px-2.5 py-1.5 text-xs rounded-xl font-mono-numbers border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      >
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                      <span>Estimation du débit calculée (m³)</span>
+                      <span class="text-[10px] text-sky-700 font-medium">Temps × Débit pompe</span>
+                    </label>
+                    <div class="p-2 bg-sky-100/70 border border-sky-300 rounded-xl flex items-center justify-between">
+                      <span id="entreeDebitEstimeText" class="font-mono font-bold text-sky-950 text-sm">0 m³</span>
+                      <span class="text-[10px] text-sky-800 font-semibold">Calcul automatique</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Capture Photo Entrée avec caméra arrière forcée (capture="environment") -->
+              <div class="pt-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Photo Préleveur Entrée <span class="text-rose-500">*</span></span>
+                  <span class="text-[11px] text-sky-600 font-medium">Caméra arrière directe</span>
+                </label>
+
+                <!-- Input File avec attributs obligatoires -->
+                <input
+                  type="file"
+                  id="entreePhotoInput"
+                  accept="image/*"
+                  capture="environment"
+                  class="hidden"
+                >
+
+                <!-- Zone d'affichage / déclenchement -->
+                <div id="entreePhotoBox" class="border-2 border-dashed border-sky-300 bg-sky-50/60 rounded-xl p-3 text-center cursor-pointer hover:bg-sky-100/60 active:scale-[0.99] transition relative overflow-hidden min-h-[140px] flex flex-col items-center justify-center">
+                  <div id="entreePlaceholder" class="space-y-2">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-sky-200/80 text-sky-700 flex items-center justify-center">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                    </div>
+                    <p class="text-xs font-bold text-sky-900">Prendre photo Entrée</p>
+                    <p class="text-[11px] text-slate-500">Ouvre directement la caméra arrière</p>
+                  </div>
+
+                  <!-- Aperçu miniature -->
+                  <div id="entreePreviewContainer" class="hidden w-full h-full flex flex-col items-center">
+                    <img id="entreePreviewImg" src="" alt="Aperçu Entrée" class="w-full h-36 object-cover rounded-lg shadow-sm border border-slate-200">
+                    <div class="mt-2 flex items-center gap-2">
+                      <button type="button" id="btnChangeEntreePhoto" class="text-xs px-2.5 py-1 bg-white border border-slate-300 rounded shadow-sm text-slate-700 hover:bg-slate-50 font-medium cursor-pointer">
+                        Reprendre
+                      </button>
+                      <button type="button" id="btnDeleteEntreePhoto" class="text-xs px-2.5 py-1 bg-rose-50 border border-rose-200 rounded shadow-sm text-rose-600 hover:bg-rose-100 font-medium cursor-pointer">
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p id="err-entreePhoto" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. BILAN SORTIE -->
+        <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border-2 border-emerald-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-emerald-100">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <div>
+                  <h2 class="text-base font-bold text-emerald-950">Bilan Sortie</h2>
+                  <p class="text-xs text-emerald-700">Prélèvement Eaux Traitées / Rejet</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase">
+                Point Sortie
+              </span>
+            </div>
+
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Date prélèvement -->
+                <div>
+                  <label for="sortieDate" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Date prélèvement <span class="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="sortieDate"
+                    name="sortieDate"
+                    class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"
+                    required
+                  >
+                  <p id="err-sortieDate" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+                </div>
+
+                <!-- Heure relève -->
+                <div>
+                  <label for="sortieHeure" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Heure relève <span class="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    id="sortieHeure"
+                    name="sortieHeure"
+                    class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"
+                    required
+                  >
+                  <p id="err-sortieHeure" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+                </div>
+              </div>
+
+              <!-- Température au préleveur / eau prélevée -->
+              <div>
+                <label for="sortieTemperature" class="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span id="labelSortieTemperature">Température au préleveur (°C) <span class="text-rose-500">*</span></span>
+                  <span id="targetSortieTemperature" class="text-[11px] text-slate-400">Cible : [2°C à 5°C]</span>
+                </label>
+                <div class="relative">
+                  <input
+                    type="number"
+                    step="0.1"
+                    id="sortieTemperature"
+                    name="sortieTemperature"
+                    placeholder="ex: 3.5"
+                    class="w-full pl-3.5 pr-12 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono-numbers bg-slate-50/50"
+                    required
+                  >
+                  <span class="absolute right-3.5 top-2.5 text-xs font-bold text-slate-400">°C</span>
+                </div>
+                <p id="err-sortieTemperature" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+              </div>
+
+              <!-- Débitmètre Sortie : Présence & Débit cumulé ou temps de marche -->
+              <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-emerald-950">
+                    Débitmètre présent en Sortie ? <span class="text-rose-500">*</span>
+                  </span>
+                  <div class="inline-flex rounded-lg border border-emerald-300 p-0.5 bg-white shadow-xs">
+                    <button type="button" id="btnSortieDebimetreOui" class="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white shadow-xs cursor-pointer">
+                      OUI
+                    </button>
+                    <button type="button" id="btnSortieDebimetreNon" class="px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer">
+                      NON
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Si OUI débitmètre -->
+                <div id="sortieDebimetreOuiBox">
+                  <label for="sortieDebit" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                    Débit cumulé passé sur 24 heures (m³) <span class="text-rose-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      id="sortieDebit"
+                      name="sortieDebit"
+                      placeholder="ex: 4620.0"
+                      class="w-full pl-3.5 pr-12 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono-numbers bg-white"
+                      required
+                    >
+                    <span class="absolute right-3.5 top-2 text-xs font-bold text-slate-400">m³</span>
+                  </div>
+                  <p id="err-sortieDebit" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+                </div>
+
+                <!-- Si NON débitmètre (estimation pompes) -->
+                <div id="sortieDebimetreNonBox" class="hidden space-y-2 pt-1 border-t border-emerald-200">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label for="sortieTempsMarchePompes" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Temps de marche (h) <span class="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        id="sortieTempsMarchePompes"
+                        placeholder="ex: 13.0"
+                        class="w-full px-2.5 py-1.5 text-xs rounded-xl font-mono-numbers border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                    </div>
+                    <div>
+                      <label for="sortieDebitPompeNominal" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Débit pompe (m³/h)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        id="sortieDebitPompeNominal"
+                        placeholder="ex: 110"
+                        class="w-full px-2.5 py-1.5 text-xs rounded-xl font-mono-numbers border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                      <span>Estimation du débit calculée (m³)</span>
+                      <span class="text-[10px] text-emerald-700 font-medium">Temps × Débit pompe</span>
+                    </label>
+                    <div class="p-2 bg-emerald-100/70 border border-emerald-300 rounded-xl flex items-center justify-between">
+                      <span id="sortieDebitEstimeText" class="font-mono font-bold text-emerald-950 text-sm">0 m³</span>
+                      <span class="text-[10px] text-emerald-800 font-semibold">Calcul automatique</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Capture Photo Sortie avec caméra arrière forcée (capture="environment") -->
+              <div class="pt-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Photo Préleveur Sortie <span class="text-rose-500">*</span></span>
+                  <span class="text-[11px] text-emerald-600 font-medium">Caméra arrière directe</span>
+                </label>
+
+                <!-- Input File avec attributs obligatoires -->
+                <input
+                  type="file"
+                  id="sortiePhotoInput"
+                  accept="image/*"
+                  capture="environment"
+                  class="hidden"
+                >
+
+                <!-- Zone d'affichage / déclenchement -->
+                <div id="sortiePhotoBox" class="border-2 border-dashed border-emerald-300 bg-emerald-50/60 rounded-xl p-3 text-center cursor-pointer hover:bg-emerald-100/60 active:scale-[0.99] transition relative overflow-hidden min-h-[140px] flex flex-col items-center justify-center">
+                  <div id="sortiePlaceholder" class="space-y-2">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-emerald-200/80 text-emerald-700 flex items-center justify-center">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                    </div>
+                    <p class="text-xs font-bold text-emerald-950">Prendre photo Sortie</p>
+                    <p class="text-[11px] text-slate-500">Ouvre directement la caméra arrière</p>
+                  </div>
+
+                  <!-- Aperçu miniature -->
+                  <div id="sortiePreviewContainer" class="hidden w-full h-full flex flex-col items-center">
+                    <img id="sortiePreviewImg" src="" alt="Aperçu Sortie" class="w-full h-36 object-cover rounded-lg shadow-sm border border-slate-200">
+                    <div class="mt-2 flex items-center gap-2">
+                      <button type="button" id="btnChangeSortiePhoto" class="text-xs px-2.5 py-1 bg-white border border-slate-300 rounded shadow-sm text-slate-700 hover:bg-slate-50 font-medium cursor-pointer">
+                        Reprendre
+                      </button>
+                      <button type="button" id="btnDeleteSortiePhoto" class="text-xs px-2.5 py-1 bg-rose-50 border border-rose-200 rounded shadow-sm text-rose-600 hover:bg-rose-100 font-medium cursor-pointer">
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p id="err-sortiePhoto" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- SECTION D'ANALYSE SPÉCIFIQUE : ÉQUIPEMENTS PRÉLEVEURS & ASSERVISSEMENT -->
+      <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 border-t-4 border-t-indigo-600">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3.5 border-b border-slate-100 gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-sm">
+              ⚙️
+            </div>
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">
+                Section d'Analyse : Équipements Préleveurs &amp; Asservissement
+              </h3>
+              <p class="text-xs text-slate-500">
+                Paramètres réglementaires d'échantillonnage continu sur 24 heures
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-700">Présence de préleveur(s) :</span>
+            <div class="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-50">
+              <button type="button" id="btnPresencePreleveurOui" class="px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-xs cursor-pointer">
+                OUI
+              </button>
+              <button type="button" id="btnPresencePreleveurNon" class="px-3 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer">
+                NON
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="preleveurConfigBox" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <!-- 1. Type de préleveur -->
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Type de préleveur <span class="text-rose-500">*</span>
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                id="btnTypeIso"
+                class="p-2.5 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs flex items-center gap-2 shadow-xs ring-1 ring-indigo-600 cursor-pointer"
+              >
+                <div class="w-3.5 h-3.5 rounded-full border border-indigo-600 bg-indigo-600 flex items-center justify-center shrink-0">
+                  <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+                </div>
+                <span>ISO monoflacon dépression</span>
+              </button>
+
+              <button
+                type="button"
+                id="btnTypePeristaltique"
+                class="p-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs flex items-center gap-2 hover:bg-slate-50 cursor-pointer"
+              >
+                <div class="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center shrink-0"></div>
+                <span>Péristaltique</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Asservissement & Fréquence -->
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Type d'asservissement &amp; Fréquence <span class="text-rose-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                id="btnAsservDebit"
+                class="p-2 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs text-center shadow-xs ring-1 ring-indigo-600 cursor-pointer"
+              >
+                Asservissement Débit
+              </button>
+              <button
+                type="button"
+                id="btnAsservTemps"
+                class="p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs text-center hover:bg-slate-50 cursor-pointer"
+              >
+                Asservissement Temps
+              </button>
+            </div>
+
+            <!-- Fréquence Débit -->
+            <div id="boxFreqDebit">
+              <label for="preleveurFrequenceDebit" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                Fréquence au débit : <span class="text-slate-500 font-normal">Un prélèvement tous les :</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  id="preleveurFrequenceDebit"
+                  value="10"
+                  placeholder="ex: 10"
+                  class="w-full pl-3 pr-14 py-2 text-xs rounded-xl font-mono-numbers border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                <span class="absolute right-3 top-2 text-xs font-bold text-slate-400">m³</span>
+              </div>
+            </div>
+
+            <!-- Fréquence Temps (Choix Déroulant) -->
+            <div id="boxFreqTemps" class="hidden">
+              <label for="preleveurFrequenceTemps" class="block text-[11px] font-semibold text-slate-700 mb-1">
+                Fréquence au temps : <span class="text-slate-500 font-normal">Un prélèvement toutes les :</span>
+              </label>
+              <div class="relative">
+                <select
+                  id="preleveurFrequenceTemps"
+                  class="w-full px-3 py-2 text-xs rounded-xl font-medium border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-xs text-slate-900"
+                >
+                  <option value="5">Toutes les 5 minutes</option>
+                  <option value="10">Toutes les 10 minutes</option>
+                  <option value="15" selected>Toutes les 15 minutes (Standard 24h)</option>
+                  <option value="20">Toutes les 20 minutes</option>
+                  <option value="30">Toutes les 30 minutes</option>
+                  <option value="45">Toutes les 45 minutes</option>
+                  <option value="60">Toutes les 60 minutes (1 heure)</option>
+                  <option value="90">Toutes les 90 minutes (1h30)</option>
+                  <option value="120">Toutes les 120 minutes (2 heures)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="preleveurAbsentNotice" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+          ⚠️ Absence de préleveurs automatiques déclarée : le rapport PDF mentionnera un mode d'échantillonnage manuel ponctuel.
+        </div>
+      </section>
+
+      <!-- Synthèse volumétrique & observations -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-1 bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col justify-center">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Bilan Volumétrique 24h</span>
+          <div id="debitCalcBox" class="mt-2 space-y-1">
+            <div class="flex items-baseline justify-between text-xs text-slate-600">
+              <span>Ratio Sortie / Entrée :</span>
+              <span id="debitRatioVal" class="font-bold font-mono text-slate-900 text-sm">-</span>
+            </div>
+            <div class="flex items-baseline justify-between text-xs text-slate-500">
+              <span>Écart de volume :</span>
+              <span id="debitDeltaVal" class="font-mono font-medium text-slate-700">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+          <label for="observations" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+            <span>Remarques / Événements d'exploitation <span class="text-slate-400 font-normal">(optionnel)</span></span>
+            <span class="text-[10px] text-slate-400">Visible sur le rapport PDF</span>
+          </label>
+          <textarea
+            id="observations"
+            name="observations"
+            rows="2"
+            placeholder="Renseignez d'éventuelles observations (ex: aspect limpide du rejet, curage, conditions d'exploitation...)"
+            class="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/50 resize-none text-slate-800"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- 4. VALIDATION ET OPTIONS DE PARTAGE DIRECT WHATSAPP & EMAIL -->
+      <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-700">
+        <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-700">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
+            4
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white">Génération du Rapport PDF &amp; Envoi</h2>
+            <p class="text-xs text-slate-300">
+              Le rapport PDF complet avec photos est généré et joint obligatoirement à l'envoi par e-mail et WhatsApp
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Carte explicative des options de transmission -->
+          <div class="p-4 rounded-xl bg-slate-800/90 border border-slate-700 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-700/60">
+                <div class="w-9 h-9 rounded-lg bg-[#25D366]/20 text-[#25D366] flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82-1.55 1.56-3.62 2.42-5.82 2.42-1.48 0-2.93-.39-4.21-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.83-1.32-1.27-2.86-1.27-4.38 0-4.54 3.7-8.24 8.24-8.24zm-3.62 4.75c-.2 0-.44.08-.66.32-.22.24-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.7 2.6 4.13 3.65.58.25 1.03.4 1.38.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.19-.71-.63-1.19-1.41-1.33-1.65-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.48-.39-.41-.54-.42h-.47z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>Partage WhatsApp</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-semibold">Fichier PDF joint</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                    Partage direct du fichier PDF via Web Share ou téléchargement direct avec synthèse wa.me.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-700/60">
+                <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>Transmission E-mail</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-400 border border-sky-800 font-semibold">PDF joint</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                    Rapport officiel joint en pièce jointe PDF avec synthèse complète et destinataire pré-rempli.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Champ adresse email optionnelle -->
+            <div class="pt-1">
+              <label for="destinataireEmail" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Adresse e-mail du destinataire <span class="text-slate-400 font-normal lowercase">(optionnel)</span></span>
+                <span class="text-[10px] text-slate-400">ex: exploitation, régie, agence de l'eau</span>
+              </label>
+              <input
+                type="email"
+                id="destinataireEmail"
+                placeholder="ex: exploitation@grand-bassin.fr"
+                class="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-700 bg-slate-900/80 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+              />
+            </div>
+          </div>
+
+          <!-- Alertes globales d'erreurs -->
+          <div id="validationBanner" class="hidden p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/50 text-rose-200 text-xs">
+            <div class="flex items-center gap-2 font-bold mb-1">
+              <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span>Veuillez compléter tous les champs obligatoires :</span>
+            </div>
+            <ul id="validationList" class="list-disc list-inside space-y-0.5 text-rose-300 pl-1"></ul>
+          </div>
+
+          <!-- Bouton principal de génération -->
+          <div class="pt-2">
+            <button
+              type="submit"
+              id="btnSubmit"
+              class="w-full py-4 px-6 rounded-xl font-extrabold text-base sm:text-lg bg-gradient-to-r from-emerald-500 via-teal-600 to-sky-600 hover:from-emerald-400 hover:to-sky-500 active:scale-[0.99] text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-3 transition cursor-pointer"
+            >
+              <svg id="btnIconSend" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <svg id="btnSpinner" class="w-6 h-6 animate-spin hidden text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="btnText">Générer le Rapport PDF (Prêt pour WhatsApp &amp; Mail)</span>
+            </button>
+            <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400 mt-2.5">
+              <span class="text-[#25D366] font-medium">✓ Partage WhatsApp avec PDF</span>
+              <span>•</span>
+              <span class="text-sky-300">✓ Envoi e-mail avec PDF joint</span>
+              <span>•</span>
+              <span class="text-slate-300">✓ Téléchargement direct</span>
+            </div>
+          </div>
+
+          <!-- Panneau d'actions directes WhatsApp / Email / Téléchargement dans la Section 4 -->
+          <div id="section4SharePanel" class="hidden p-3.5 rounded-xl bg-slate-900 border border-emerald-500/60 space-y-2.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Rapport PDF prêt pour l'envoi :</span>
+              </span>
+              <span id="section4FileName" class="font-mono text-slate-300 truncate max-w-[200px]"></span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              <button
+                type="button"
+                id="section4BtnWhatsApp"
+                class="py-2.5 px-3 bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1caa4f] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-md"
+              >
+                <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82-1.55 1.56-3.62 2.42-5.82 2.42-1.48 0-2.93-.39-4.21-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.83-1.32-1.27-2.86-1.27-4.38 0-4.54 3.7-8.24 8.24-8.24zm-3.62 4.75c-.2 0-.44.08-.66.32-.22.24-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.7 2.6 4.13 3.65.58.25 1.03.4 1.38.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.19-.71-.63-1.19-1.41-1.33-1.65-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.48-.39-.41-.54-.42h-.47z"/></svg>
+                <span>Envoyer WhatsApp</span>
+              </button>
+              <button
+                type="button"
+                id="section4BtnEmail"
+                class="py-2.5 px-3 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-md"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span>Envoyer par Email</span>
+              </button>
+              <button
+                type="button"
+                id="section4BtnDownload"
+                class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer border border-slate-700 shadow-md"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Télécharger PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </form>
+
+  </main>
+
+  <!-- PIED DE PAGE : MENTION OBLIGATOIRE -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-5 px-4">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Autosurveillance STEP • Fiche d'intervention terrain</span>
+      </div>
+      <div class="font-bold text-slate-700 text-sm">
+        Créé par Laurent Juillien avec l'assistance de l'IA
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL DE CONFIRMATION / APERÇU COMPLET DU PDF & PARTAGE -->
+  <div id="successModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden border border-slate-300">
+      
+      <!-- Header modal -->
+      <div class="flex items-center justify-between p-4 bg-slate-900 text-white shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <span>Rapport PDF Officiel Généré</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-900 text-emerald-300 font-normal">Photos incluses</span>
+            </h3>
+            <p id="modalFileName" class="text-xs text-slate-300 font-mono truncate max-w-[280px] sm:max-w-md"></p>
+          </div>
+        </div>
+        <button type="button" id="modalBtnClose" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- BARRE D'ACTIONS DE PARTAGE DIRECT WHATSAPP & EMAIL -->
+      <div class="p-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 text-white shrink-0">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>Partager le Bilan Officiel</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700">Prêt</span>
+              </h4>
+              <p class="text-xs text-slate-300">
+                Rapport téléchargé sur votre appareil. Choisissez votre mode de transmission :
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              id="modalBtnWhatsApp"
+              class="flex-1 sm:flex-initial py-2.5 px-4 bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1caa4f] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-md"
+              title="Envoyer le rapport avec le PDF via WhatsApp"
+            >
+              <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82-1.55 1.56-3.62 2.42-5.82 2.42-1.48 0-2.93-.39-4.21-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.83-1.32-1.27-2.86-1.27-4.38 0-4.54 3.7-8.24 8.24-8.24zm-3.62 4.75c-.2 0-.44.08-.66.32-.22.24-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.7 2.6 4.13 3.65.58.25 1.03.4 1.38.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.19-.71-.63-1.19-1.41-1.33-1.65-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.48-.39-.41-.54-.42h-.47z"/></svg>
+              <span>Envoyer via WhatsApp</span>
+            </button>
+
+            <button
+              type="button"
+              id="modalBtnEmail"
+              class="flex-1 sm:flex-initial py-2.5 px-4 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-md"
+              title="Envoyer par Email avec le PDF joint"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <span>Envoyer par Email</span>
+            </button>
+
+            <button
+              type="button"
+              id="modalBtnCopy"
+              class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-medium rounded-xl flex items-center justify-center gap-1.5 text-xs transition border border-slate-700 cursor-pointer"
+              title="Copier le texte du récapitulatif"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              <span id="modalCopyText">Copier texte</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="modalShareFeedback" class="hidden mt-2.5 p-2 bg-emerald-950/70 border border-emerald-700 text-emerald-300 text-xs rounded-lg flex items-center gap-2">
+          <span>✓ Partage en cours...</span>
+        </div>
+      </div>
+
+      <!-- Iframe aperçu interactif du PDF -->
+      <div class="flex-1 min-h-[350px] sm:min-h-[440px] bg-slate-200 relative p-2">
+        <iframe
+          id="modalPdfFrame"
+          title="Aperçu interactif du rapport PDF d'autosurveillance"
+          class="w-full h-full rounded-xl border border-slate-300 bg-white shadow-inner"
+        ></iframe>
+      </div>
+
+      <!-- Boutons d'action en bas de modale -->
+      <div class="p-4 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            id="modalBtnDownload"
+            class="flex-1 sm:flex-initial py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-sm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Télécharger le PDF</span>
+          </button>
+
+          <button
+            type="button"
+            id="modalBtnFooterWhatsApp"
+            class="flex-1 sm:flex-initial py-2.5 px-4 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-sm"
+          >
+            <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82-1.55 1.56-3.62 2.42-5.82 2.42-1.48 0-2.93-.39-4.21-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.83-1.32-1.27-2.86-1.27-4.38 0-4.54 3.7-8.24 8.24-8.24zm-3.62 4.75c-.2 0-.44.08-.66.32-.22.24-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.7 2.6 4.13 3.65.58.25 1.03.4 1.38.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.19-.71-.63-1.19-1.41-1.33-1.65-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.48-.39-.41-.54-.42h-.47z"/></svg>
+            <span>Envoyer via WhatsApp</span>
+          </button>
+
+          <button
+            type="button"
+            id="modalBtnFooterEmail"
+            class="flex-1 sm:flex-initial py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-sm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span>Envoyer par Email</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          id="modalBtnBottomClose"
+          class="text-xs text-slate-500 hover:text-slate-800 font-medium py-1 px-3 cursor-pointer"
+        >
+          Fermer l'aperçu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIQUE TERRAIN JS -->
+  <script>
+    (function() {
+      'use strict';
+
+      // State
+      const state = {
+        entreePhoto: null,
+        sortiePhoto: null,
+        lastBlob: null,
+        lastFileName: '',
+        lastPdfRes: null,
+        entreeHasDebimetre: true,
+        sortieHasDebimetre: true,
+        presencePreleveur: true,
+        preleveurType: 'ISO monoflacon dépression',
+        preleveurAsservissement: 'débit',
+      };
+
+      // Form Elements
+      const form = document.getElementById('autosurveillanceForm');
+      const nomStep = document.getElementById('nomStep');
+      const dateAutosurveillance = document.getElementById('dateAutosurveillance');
+      const technicienNom = document.getElementById('technicienNom');
+      const meteo = document.getElementById('meteo');
+      const observations = document.getElementById('observations');
+      const destinataireEmail = document.getElementById('destinataireEmail');
+
+      // Entrée
+      const entreeDate = document.getElementById('entreeDate');
+      const entreeHeure = document.getElementById('entreeHeure');
+      const entreeTemperature = document.getElementById('entreeTemperature');
+      const entreeDebit = document.getElementById('entreeDebit');
+      const entreePhotoInput = document.getElementById('entreePhotoInput');
+      const entreePhotoBox = document.getElementById('entreePhotoBox');
+      const entreePlaceholder = document.getElementById('entreePlaceholder');
+      const entreePreviewContainer = document.getElementById('entreePreviewContainer');
+      const entreePreviewImg = document.getElementById('entreePreviewImg');
+      const btnDeleteEntreePhoto = document.getElementById('btnDeleteEntreePhoto');
+      const btnChangeEntreePhoto = document.getElementById('btnChangeEntreePhoto');
+
+      // Débitmètre Entrée
+      const btnEntreeDebimetreOui = document.getElementById('btnEntreeDebimetreOui');
+      const btnEntreeDebimetreNon = document.getElementById('btnEntreeDebimetreNon');
+      const entreeDebimetreOuiBox = document.getElementById('entreeDebimetreOuiBox');
+      const entreeDebimetreNonBox = document.getElementById('entreeDebimetreNonBox');
+      const entreeTempsMarchePompes = document.getElementById('entreeTempsMarchePompes');
+      const entreeDebitPompeNominal = document.getElementById('entreeDebitPompeNominal');
+      const entreeDebitEstimeText = document.getElementById('entreeDebitEstimeText');
+
+      // Sortie
+      const sortieDate = document.getElementById('sortieDate');
+      const sortieHeure = document.getElementById('sortieHeure');
+      const sortieTemperature = document.getElementById('sortieTemperature');
+      const sortieDebit = document.getElementById('sortieDebit');
+      const sortiePhotoInput = document.getElementById('sortiePhotoInput');
+      const sortiePhotoBox = document.getElementById('sortiePhotoBox');
+      const sortiePlaceholder = document.getElementById('sortiePlaceholder');
+      const sortiePreviewContainer = document.getElementById('sortiePreviewContainer');
+      const sortiePreviewImg = document.getElementById('sortiePreviewImg');
+      const btnDeleteSortiePhoto = document.getElementById('btnDeleteSortiePhoto');
+      const btnChangeSortiePhoto = document.getElementById('btnChangeSortiePhoto');
+
+      // Débitmètre Sortie
+      const btnSortieDebimetreOui = document.getElementById('btnSortieDebimetreOui');
+      const btnSortieDebimetreNon = document.getElementById('btnSortieDebimetreNon');
+      const sortieDebimetreOuiBox = document.getElementById('sortieDebimetreOuiBox');
+      const sortieDebimetreNonBox = document.getElementById('sortieDebimetreNonBox');
+      const sortieTempsMarchePompes = document.getElementById('sortieTempsMarchePompes');
+      const sortieDebitPompeNominal = document.getElementById('sortieDebitPompeNominal');
+      const sortieDebitEstimeText = document.getElementById('sortieDebitEstimeText');
+
+      // Préleveurs
+      const btnPresencePreleveurOui = document.getElementById('btnPresencePreleveurOui');
+      const btnPresencePreleveurNon = document.getElementById('btnPresencePreleveurNon');
+      const preleveurConfigBox = document.getElementById('preleveurConfigBox');
+      const preleveurAbsentNotice = document.getElementById('preleveurAbsentNotice');
+      const btnTypeIso = document.getElementById('btnTypeIso');
+      const btnTypePeristaltique = document.getElementById('btnTypePeristaltique');
+      const btnAsservDebit = document.getElementById('btnAsservDebit');
+      const btnAsservTemps = document.getElementById('btnAsservTemps');
+      const boxFreqDebit = document.getElementById('boxFreqDebit');
+      const boxFreqTemps = document.getElementById('boxFreqTemps');
+      const preleveurFrequenceDebit = document.getElementById('preleveurFrequenceDebit');
+      const preleveurFrequenceTemps = document.getElementById('preleveurFrequenceTemps');
+
+      // Ratio volumétrique
+      const debitRatioVal = document.getElementById('debitRatioVal');
+      const debitDeltaVal = document.getElementById('debitDeltaVal');
+
+      // Section 4 Elements
+      const btnSubmit = document.getElementById('btnSubmit');
+      const btnText = document.getElementById('btnText');
+      const btnIconSend = document.getElementById('btnIconSend');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const validationBanner = document.getElementById('validationBanner');
+      const validationList = document.getElementById('validationList');
+      const section4SharePanel = document.getElementById('section4SharePanel');
+      const section4FileName = document.getElementById('section4FileName');
+      const section4BtnWhatsApp = document.getElementById('section4BtnWhatsApp');
+      const section4BtnEmail = document.getElementById('section4BtnEmail');
+      const section4BtnDownload = document.getElementById('section4BtnDownload');
+
+      // Modal Elements
+      const successModal = document.getElementById('successModal');
+      const modalFileName = document.getElementById('modalFileName');
+      const modalBtnClose = document.getElementById('modalBtnClose');
+      const modalBtnBottomClose = document.getElementById('modalBtnBottomClose');
+      const modalBtnDownload = document.getElementById('modalBtnDownload');
+      const modalBtnWhatsApp = document.getElementById('modalBtnWhatsApp');
+      const modalBtnEmail = document.getElementById('modalBtnEmail');
+      const modalBtnFooterWhatsApp = document.getElementById('modalBtnFooterWhatsApp');
+      const modalBtnFooterEmail = document.getElementById('modalBtnFooterEmail');
+      const modalBtnCopy = document.getElementById('modalBtnCopy');
+      const modalCopyText = document.getElementById('modalCopyText');
+
+      // Initialiser dates & heures par défaut
+      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const defaultHour = String(now.getHours()).padStart(2, '0') + ':' + String(Math.floor(now.getMinutes() / 5) * 5).padStart(2, '0');
+
+      dateAutosurveillance.value = today;
+      entreeDate.value = today;
+      entreeHeure.value = defaultHour;
+      sortieDate.value = today;
+      sortieHeure.value = defaultHour;
+
+      // Bascule Débitmètre Entrée
+      function setEntreeDebimetre(hasIt) {
+        state.entreeHasDebimetre = hasIt;
+        if (hasIt) {
+          btnEntreeDebimetreOui.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-sky-600 text-white shadow-xs cursor-pointer';
+          btnEntreeDebimetreNon.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer';
+          entreeDebimetreOuiBox.classList.remove('hidden');
+          entreeDebimetreNonBox.classList.add('hidden');
+        } else {
+          btnEntreeDebimetreNon.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-sky-600 text-white shadow-xs cursor-pointer';
+          btnEntreeDebimetreOui.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer';
+          entreeDebimetreOuiBox.classList.add('hidden');
+          entreeDebimetreNonBox.classList.remove('hidden');
+          calcEntreeEstimation();
+        }
+        updateVolumetricRatio();
+      }
+
+      btnEntreeDebimetreOui.addEventListener('click', () => setEntreeDebimetre(true));
+      btnEntreeDebimetreNon.addEventListener('click', () => setEntreeDebimetre(false));
+
+      function calcEntreeEstimation() {
+        const t = parseFloat(entreeTempsMarchePompes.value);
+        const q = parseFloat(entreeDebitPompeNominal.value);
+        if (!isNaN(t) && !isNaN(q) && t >= 0 && q >= 0) {
+          const est = (t * q).toFixed(1);
+          entreeDebitEstimeText.textContent = est + ' m³';
+          entreeDebit.value = est;
+        } else {
+          entreeDebitEstimeText.textContent = '0 m³';
+        }
+        updateVolumetricRatio();
+      }
+      entreeTempsMarchePompes.addEventListener('input', calcEntreeEstimation);
+      entreeDebitPompeNominal.addEventListener('input', calcEntreeEstimation);
+
+      // Bascule Débitmètre Sortie
+      function setSortieDebimetre(hasIt) {
+        state.sortieHasDebimetre = hasIt;
+        if (hasIt) {
+          btnSortieDebimetreOui.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white shadow-xs cursor-pointer';
+          btnSortieDebimetreNon.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer';
+          sortieDebimetreOuiBox.classList.remove('hidden');
+          sortieDebimetreNonBox.classList.add('hidden');
+        } else {
+          btnSortieDebimetreNon.className = 'px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white shadow-xs cursor-pointer';
+          btnSortieDebimetreOui.className = 'px-2.5 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer';
+          sortieDebimetreOuiBox.classList.add('hidden');
+          sortieDebimetreNonBox.classList.remove('hidden');
+          calcSortieEstimation();
+        }
+        updateVolumetricRatio();
+      }
+
+      btnSortieDebimetreOui.addEventListener('click', () => setSortieDebimetre(true));
+      btnSortieDebimetreNon.addEventListener('click', () => setSortieDebimetre(false));
+
+      function calcSortieEstimation() {
+        const t = parseFloat(sortieTempsMarchePompes.value);
+        const q = parseFloat(sortieDebitPompeNominal.value);
+        if (!isNaN(t) && !isNaN(q) && t >= 0 && q >= 0) {
+          const est = (t * q).toFixed(1);
+          sortieDebitEstimeText.textContent = est + ' m³';
+          sortieDebit.value = est;
+        } else {
+          sortieDebitEstimeText.textContent = '0 m³';
+        }
+        updateVolumetricRatio();
+      }
+      sortieTempsMarchePompes.addEventListener('input', calcSortieEstimation);
+      sortieDebitPompeNominal.addEventListener('input', calcSortieEstimation);
+
+      function updateTemperatureLabels() {
+        const labelEntree = document.getElementById('labelEntreeTemperature');
+        const targetEntree = document.getElementById('targetEntreeTemperature');
+        const labelSortie = document.getElementById('labelSortieTemperature');
+        const targetSortie = document.getElementById('targetSortieTemperature');
+
+        if (state.presencePreleveur) {
+          if (labelEntree) labelEntree.innerHTML = 'Température au préleveur (°C) <span class="text-rose-500">*</span>';
+          if (targetEntree) targetEntree.textContent = 'Cible : [2°C à 5°C]';
+          if (entreeTemperature && (!entreeTemperature.value || entreeTemperature.placeholder.includes('14'))) entreeTemperature.placeholder = 'ex: 3.8';
+
+          if (labelSortie) labelSortie.innerHTML = 'Température au préleveur (°C) <span class="text-rose-500">*</span>';
+          if (targetSortie) targetSortie.textContent = 'Cible : [2°C à 5°C]';
+          if (sortieTemperature && (!sortieTemperature.value || sortieTemperature.placeholder.includes('13'))) sortieTemperature.placeholder = 'ex: 3.5';
+        } else {
+          if (labelEntree) labelEntree.innerHTML = 'Température de l\'eau prélevée (°C) <span class="text-rose-500">*</span>';
+          if (targetEntree) targetEntree.textContent = 'Mesure directe eau';
+          if (entreeTemperature && (!entreeTemperature.value || entreeTemperature.placeholder.includes('3.8'))) entreeTemperature.placeholder = 'ex: 14.5';
+
+          if (labelSortie) labelSortie.innerHTML = 'Température de l\'eau prélevée (°C) <span class="text-rose-500">*</span>';
+          if (targetSortie) targetSortie.textContent = 'Mesure directe eau';
+          if (sortieTemperature && (!sortieTemperature.value || sortieTemperature.placeholder.includes('3.5'))) sortieTemperature.placeholder = 'ex: 13.8';
+        }
+      }
+
+      function setPresencePreleveur(oui) {
+        state.presencePreleveur = oui;
+        if (oui) {
+          btnPresencePreleveurOui.className = 'px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-xs cursor-pointer';
+          btnPresencePreleveurNon.className = 'px-3 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer';
+          preleveurConfigBox.classList.remove('hidden');
+          preleveurAbsentNotice.classList.add('hidden');
+        } else {
+          btnPresencePreleveurNon.className = 'px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-xs cursor-pointer';
+          btnPresencePreleveurOui.className = 'px-3 py-1 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 cursor-pointer';
+          preleveurConfigBox.classList.add('hidden');
+          preleveurAbsentNotice.classList.remove('hidden');
+        }
+        updateTemperatureLabels();
+      }
+
+      // Bascule Préleveurs
+      btnPresencePreleveurOui.addEventListener('click', () => setPresencePreleveur(true));
+      btnPresencePreleveurNon.addEventListener('click', () => setPresencePreleveur(false));
+
+      btnTypeIso.addEventListener('click', () => {
+        state.preleveurType = 'ISO monoflacon dépression';
+        btnTypeIso.className = 'p-2.5 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs flex items-center gap-2 shadow-xs ring-1 ring-indigo-600 cursor-pointer';
+        btnTypePeristaltique.className = 'p-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs flex items-center gap-2 hover:bg-slate-50 cursor-pointer';
+      });
+
+      btnTypePeristaltique.addEventListener('click', () => {
+        state.preleveurType = 'péristaltique';
+        btnTypePeristaltique.className = 'p-2.5 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs flex items-center gap-2 shadow-xs ring-1 ring-indigo-600 cursor-pointer';
+        btnTypeIso.className = 'p-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs flex items-center gap-2 hover:bg-slate-50 cursor-pointer';
+      });
+
+      btnAsservDebit.addEventListener('click', () => {
+        state.preleveurAsservissement = 'débit';
+        btnAsservDebit.className = 'p-2 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs text-center shadow-xs ring-1 ring-indigo-600 cursor-pointer';
+        btnAsservTemps.className = 'p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs text-center hover:bg-slate-50 cursor-pointer';
+        boxFreqDebit.classList.remove('hidden');
+        boxFreqTemps.classList.add('hidden');
+      });
+
+      btnAsservTemps.addEventListener('click', () => {
+        state.preleveurAsservissement = 'temps';
+        btnAsservTemps.className = 'p-2 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs text-center shadow-xs ring-1 ring-indigo-600 cursor-pointer';
+        btnAsservDebit.className = 'p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs text-center hover:bg-slate-50 cursor-pointer';
+        boxFreqTemps.classList.remove('hidden');
+        boxFreqDebit.classList.add('hidden');
+      });
+
+      // Calcul ratio volumétrique dynamique
+      function updateVolumetricRatio() {
+        const qIn = parseFloat(entreeDebit.value);
+        const qOut = parseFloat(sortieDebit.value);
+        if (!isNaN(qIn) && !isNaN(qOut) && qIn > 0) {
+          const ratio = ((qOut / qIn) * 100).toFixed(1);
+          const delta = (qOut - qIn).toFixed(1);
+          debitRatioVal.textContent = ratio + ' %';
+          debitDeltaVal.textContent = (Number(delta) > 0 ? '+' + delta : delta) + ' m³';
+        } else {
+          debitRatioVal.textContent = '-';
+          debitDeltaVal.textContent = '-';
+        }
+      }
+      entreeDebit.addEventListener('input', updateVolumetricRatio);
+      sortieDebit.addEventListener('input', updateVolumetricRatio);
+
+      // Gestion Photo Entrée
+      entreePhotoBox.addEventListener('click', function(e) {
+        if (e.target !== btnDeleteEntreePhoto && e.target !== btnChangeEntreePhoto) {
+          entreePhotoInput.click();
+        }
+      });
+
+      entreePhotoInput.addEventListener('change', async function() {
+        if (!this.files || !this.files[0]) return;
+        try {
+          const file = this.files[0];
+          const dataUrl = await readFileAsDataUrl(file);
+          state.entreePhoto = dataUrl;
+          entreePreviewImg.src = dataUrl;
+          entreePlaceholder.classList.add('hidden');
+          entreePreviewContainer.classList.remove('hidden');
+          clearError('entreePhoto');
+        } catch (err) {
+          alert("Erreur lors de la lecture de la photo : " + err.message);
+        }
+      });
+
+      btnDeleteEntreePhoto.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.entreePhoto = null;
+        entreePhotoInput.value = '';
+        entreePreviewImg.src = '';
+        entreePreviewContainer.classList.add('hidden');
+        entreePlaceholder.classList.remove('hidden');
+      });
+
+      btnChangeEntreePhoto.addEventListener('click', function(e) {
+        e.stopPropagation();
+        entreePhotoInput.click();
+      });
+
+      // Gestion Photo Sortie
+      sortiePhotoBox.addEventListener('click', function(e) {
+        if (e.target !== btnDeleteSortiePhoto && e.target !== btnChangeSortiePhoto) {
+          sortiePhotoInput.click();
+        }
+      });
+
+      sortiePhotoInput.addEventListener('change', async function() {
+        if (!this.files || !this.files[0]) return;
+        try {
+          const file = this.files[0];
+          const dataUrl = await readFileAsDataUrl(file);
+          state.sortiePhoto = dataUrl;
+          sortiePreviewImg.src = dataUrl;
+          sortiePlaceholder.classList.add('hidden');
+          sortiePreviewContainer.classList.remove('hidden');
+          clearError('sortiePhoto');
+        } catch (err) {
+          alert("Erreur lors de la lecture de la photo : " + err.message);
+        }
+      });
+
+      btnDeleteSortiePhoto.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.sortiePhoto = null;
+        sortiePhotoInput.value = '';
+        sortiePreviewImg.src = '';
+        sortiePreviewContainer.classList.add('hidden');
+        sortiePlaceholder.classList.remove('hidden');
+      });
+
+      btnChangeSortiePhoto.addEventListener('click', function(e) {
+        e.stopPropagation();
+        sortiePhotoInput.click();
+      });
+
+      function readFileAsDataUrl(file) {
+        return new Promise(function(resolve, reject) {
+          const reader = new FileReader();
+          reader.onload = function(e) { resolve(e.target.result); };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function showError(fieldId, message) {
+        const errEl = document.getElementById('err-' + fieldId);
+        if (errEl) {
+          errEl.textContent = message;
+          errEl.classList.remove('hidden');
+        }
+        const inputEl = document.getElementById(fieldId);
+        if (inputEl) {
+          inputEl.classList.add('border-rose-500', 'bg-rose-50/40');
+        }
+      }
+
+      function clearError(fieldId) {
+        const errEl = document.getElementById('err-' + fieldId);
+        if (errEl) {
+          errEl.textContent = '';
+          errEl.classList.add('hidden');
+        }
+        const inputEl = document.getElementById(fieldId);
+        if (inputEl) {
+          inputEl.classList.remove('border-rose-500', 'bg-rose-50/40');
+        }
+      }
+
+      ['nomStep', 'dateAutosurveillance', 'entreeDate', 'entreeHeure', 'entreeTemperature', 'entreeDebit', 'sortieDate', 'sortieHeure', 'sortieTemperature', 'sortieDebit'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', function() { clearError(id); });
+        }
+      });
+
+      // Validation
+      function validateForm() {
+        const errors = [];
+        validationBanner.classList.add('hidden');
+        validationList.innerHTML = '';
+
+        if (!nomStep.value.trim()) {
+          showError('nomStep', 'Le nom de la STEP est obligatoire');
+          errors.push("Nom de la station d'épuration (STEP)");
+        } else {
+          clearError('nomStep');
+        }
+
+        if (!dateAutosurveillance.value) {
+          showError('dateAutosurveillance', 'La date de bilan est obligatoire');
+          errors.push("Date de l'autosurveillance");
+        } else {
+          clearError('dateAutosurveillance');
+        }
+
+        // Entrée
+        if (!entreeDate.value) {
+          showError('entreeDate', 'Date obligatoire');
+          errors.push("Entrée : Date de prélèvement");
+        }
+        if (!entreeHeure.value) {
+          showError('entreeHeure', 'Heure obligatoire');
+          errors.push("Entrée : Heure de relève");
+        }
+        if (entreeTemperature.value === '') {
+          showError('entreeTemperature', 'Température obligatoire');
+          errors.push("Entrée : Température préleveur");
+        }
+        if (state.entreeHasDebimetre) {
+          if (entreeDebit.value === '' || parseFloat(entreeDebit.value) < 0) {
+            showError('entreeDebit', 'Débit mesuré obligatoire (>= 0)');
+            errors.push("Entrée : Débit cumulé 24h");
+          }
+        } else {
+          if (!entreeTempsMarchePompes.value || parseFloat(entreeTempsMarchePompes.value) < 0) {
+            errors.push("Entrée : Temps de marche pompes");
+          }
+          if (entreeDebit.value === '' || parseFloat(entreeDebit.value) < 0) {
+            errors.push("Entrée : Estimation du débit calculée");
+          }
+        }
+        if (!state.entreePhoto) {
+          showError('entreePhoto', 'Photo du préleveur Entrée obligatoire');
+          errors.push("Entrée : Photo du préleveur / flacons");
+        }
+
+        // Sortie
+        if (!sortieDate.value) {
+          showError('sortieDate', 'Date obligatoire');
+          errors.push("Sortie : Date de prélèvement");
+        }
+        if (!sortieHeure.value) {
+          showError('sortieHeure', 'Heure obligatoire');
+          errors.push("Sortie : Heure de relève");
+        }
+        if (sortieTemperature.value === '') {
+          showError('sortieTemperature', 'Température obligatoire');
+          errors.push("Sortie : Température préleveur");
+        }
+        if (state.sortieHasDebimetre) {
+          if (sortieDebit.value === '' || parseFloat(sortieDebit.value) < 0) {
+            showError('sortieDebit', 'Débit mesuré obligatoire (>= 0)');
+            errors.push("Sortie : Débit cumulé 24h");
+          }
+        } else {
+          if (!sortieTempsMarchePompes.value || parseFloat(sortieTempsMarchePompes.value) < 0) {
+            errors.push("Sortie : Temps de marche pompes");
+          }
+          if (sortieDebit.value === '' || parseFloat(sortieDebit.value) < 0) {
+            errors.push("Sortie : Estimation du débit calculée");
+          }
+        }
+        if (!state.sortiePhoto) {
+          showError('sortiePhoto', 'Photo du préleveur Sortie obligatoire');
+          errors.push("Sortie : Photo du préleveur / rejet");
+        }
+
+        if (errors.length > 0) {
+          errors.forEach(function(msg) {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            validationList.appendChild(li);
+          });
+          validationBanner.classList.remove('hidden');
+          validationBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return false;
+        }
+
+        return true;
+      }
+
+      function prepareCanvasImage(dataUrl) {
+        if (!dataUrl) return Promise.resolve(null);
+        return new Promise(function(resolve) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function() {
+            const w = img.naturalWidth || img.width || 800;
+            const h = img.naturalHeight || img.height || 600;
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve({ canvas: canvas, ratio: w / h });
+          };
+          img.onerror = function() { resolve(null); };
+          img.src = dataUrl;
+        });
+      }
+
+      // Construction du PDF avec jsPDF
+      async function buildPdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+
+        const [entreeImg, sortieImg] = await Promise.all([
+          prepareCanvasImage(state.entreePhoto),
+          prepareCanvasImage(state.sortiePhoto)
+        ]);
+
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const margin = 12;
+        const contentWidth = pageWidth - margin * 2; // 186mm
+
+        const primary = [15, 76, 129];
+        const secondary = [2, 132, 199];
+        const entreeColor = [3, 105, 161];
+        const sortieColor = [5, 150, 105];
+        const textDark = [30, 41, 59];
+        const textMuted = [100, 116, 139];
+
+        // 1. En-tête officiel
+        doc.setFillColor(primary[0], primary[1], primary[2]);
+        doc.rect(margin, 10, contentWidth, 18, 'F');
+        doc.setFillColor(secondary[0], secondary[1], secondary[2]);
+        doc.rect(margin, 28, contentWidth, 2, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12.5);
+        doc.text("BILAN D'AUTOSURVEILLANCE 24H — STATION D'ÉPURATION", margin + 5, 17.5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text("CONTRÔLE RÉGLEMENTAIRE TERRAIN • DÉBITS, PRÉLÈVEURS & PARAMÈTRES D'EXPLOITATION", margin + 5, 23.5);
+
+        const nowFormatted = new Date().toLocaleDateString('fr-FR');
+        const nowTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        doc.setFontSize(7.5);
+        doc.text(`Réf : AS-${(dateAutosurveillance.value || '').replace(/-/g, '')}`, pageWidth - margin - 5, 17.5, { align: 'right' });
+        doc.text(`Édité le : ${nowFormatted} à ${nowTime}`, pageWidth - margin - 5, 23.5, { align: 'right' });
+
+        let curY = 34;
+
+        // 2. Fiche Station
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(margin, curY, contentWidth, 14, 1.5, 1.5, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(primary[0], primary[1], primary[2]);
+        doc.text("STATION D'ÉPURATION (STEP) :", margin + 4, curY + 5.5);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+        doc.text((nomStep.value || 'NON SPÉCIFIÉ').toUpperCase(), margin + 52, curY + 5.5);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+        doc.text("Date du bilan :", margin + 4, curY + 10.5);
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+        doc.text(dateAutosurveillance.value ? new Date(dateAutosurveillance.value + 'T00:00:00').toLocaleDateString('fr-FR') : '-', margin + 25, curY + 10.5);
+
+        if (technicienNom.value) {
+          doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Technicien :", margin + 75, curY + 10.5);
+          doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+          doc.setFont('helvetica', 'bold');
+          doc.text(technicienNom.value, margin + 92, curY + 10.5);
+        }
+
+        if (meteo.value) {
+          doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Météo :", margin + 140, curY + 10.5);
+          doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+          doc.setFont('helvetica', 'bold');
+          doc.text(meteo.value, margin + 152, curY + 10.5);
+        }
+
+        curY += 17;
+
+        // 3. Mesures Entrée & Sortie
+        const colWidth = (contentWidth - 6) / 2; // 90mm
+        const colEntreeX = margin;
+        const colSortieX = margin + colWidth + 6;
+        const blockHeight = 35;
+
+        // Bloc Entrée
+        doc.setFillColor(240, 249, 255);
+        doc.setDrawColor(186, 230, 253);
+        doc.roundedRect(colEntreeX, curY, colWidth, blockHeight, 1.5, 1.5, 'FD');
+
+        doc.setFillColor(entreeColor[0], entreeColor[1], entreeColor[2]);
+        doc.roundedRect(colEntreeX, curY, colWidth, 6, 1.5, 1.5, 'F');
+        doc.rect(colEntreeX, curY + 2.5, colWidth, 3.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text("POINT DE MESURE : ENTRÉE (Eaux Brutes)", colEntreeX + 4, curY + 4.2);
+
+        const eRows = [
+          { label: "Date & heure relève", val: `${entreeDate.value} à ${entreeHeure.value}` },
+          { label: state.presencePreleveur ? "Température préleveur" : "Température eau prélevée", val: `${entreeTemperature.value} °C` },
+          { label: state.entreeHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", val: `${entreeDebit.value ? Number(entreeDebit.value).toLocaleString('fr-FR') : '-'} m³`, hl: true }
+        ];
+
+        let rY = curY + 10.5;
+        eRows.forEach(r => {
+          doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.text(r.label, colEntreeX + 4, rY);
+          doc.setTextColor(r.hl ? entreeColor[0] : textDark[0], r.hl ? entreeColor[1] : textDark[1], r.hl ? entreeColor[2] : textDark[2]);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(r.hl ? 9 : 7.5);
+          doc.text(r.val, colEntreeX + colWidth - 4, rY, { align: 'right' });
+          rY += 7.2;
+        });
+
+        // Bloc Sortie
+        doc.setFillColor(236, 253, 245);
+        doc.setDrawColor(167, 243, 208);
+        doc.roundedRect(colSortieX, curY, colWidth, blockHeight, 1.5, 1.5, 'FD');
+
+        doc.setFillColor(sortieColor[0], sortieColor[1], sortieColor[2]);
+        doc.roundedRect(colSortieX, curY, colWidth, 6, 1.5, 1.5, 'F');
+        doc.rect(colSortieX, curY + 2.5, colWidth, 3.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text("POINT DE MESURE : SORTIE (Rejet Traité)", colSortieX + 4, curY + 4.2);
+
+        const sRows = [
+          { label: "Date & heure relève", val: `${sortieDate.value} à ${sortieHeure.value}` },
+          { label: state.presencePreleveur ? "Température préleveur" : "Température eau prélevée", val: `${sortieTemperature.value} °C` },
+          { label: state.sortieHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", val: `${sortieDebit.value ? Number(sortieDebit.value).toLocaleString('fr-FR') : '-'} m³`, hl: true }
+        ];
+
+        rY = curY + 10.5;
+        sRows.forEach(r => {
+          doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.text(r.label, colSortieX + 4, rY);
+          doc.setTextColor(r.hl ? sortieColor[0] : textDark[0], r.hl ? sortieColor[1] : textDark[1], r.hl ? sortieColor[2] : textDark[2]);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(r.hl ? 9 : 7.5);
+          doc.text(r.val, colSortieX + colWidth - 4, rY, { align: 'right' });
+          rY += 7.2;
+        });
+
+        curY += blockHeight + 3.5;
+
+        // 4. Section Équipements d'exploitation : Débitmètres & Préleveurs
+        const equipHeight = 24;
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin, curY, contentWidth, equipHeight, 1.5, 1.5, 'FD');
+
+        doc.setFillColor(primary[0], primary[1], primary[2]);
+        doc.roundedRect(margin, curY, contentWidth, 5.5, 1.5, 1.5, 'F');
+        doc.rect(margin, curY + 2.5, contentWidth, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text("ANALYSE DES ÉQUIPEMENTS D'EXPLOITATION : DÉBITMÈTRES & PRÉLEVEURS", margin + 4, curY + 3.8);
+
+        const subColW = (contentWidth - 6) / 2;
+        const leftX = margin + 3;
+        const rightX = margin + subColW + 6;
+        let eqY = curY + 9;
+
+        // Débitmètres
+        doc.setTextColor(primary[0], primary[1], primary[2]);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("1. Mode de mesure des Débits :", leftX, eqY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+
+        const txtE = state.entreeHasDebimetre
+          ? `• Entrée : Débitmètre [OUI] → Débit cumulé 24h = ${Number(entreeDebit.value).toLocaleString('fr-FR')} m³`
+          : `• Entrée : Débitmètre [NON] → Estimé = ${Number(entreeDebit.value).toLocaleString('fr-FR')} m³ (Pompes : ${entreeTempsMarchePompes.value || '-'}h @ ${entreeDebitPompeNominal.value || '-'} m³/h)`;
+        doc.text(txtE, leftX + 2, eqY + 4.5);
+
+        const txtS = state.sortieHasDebimetre
+          ? `• Sortie : Débitmètre [OUI] → Débit cumulé 24h = ${Number(sortieDebit.value).toLocaleString('fr-FR')} m³`
+          : `• Sortie : Débitmètre [NON] → Estimé = ${Number(sortieDebit.value).toLocaleString('fr-FR')} m³ (Pompes : ${sortieTempsMarchePompes.value || '-'}h @ ${sortieDebitPompeNominal.value || '-'} m³/h)`;
+        doc.text(txtS, leftX + 2, eqY + 9);
+
+        // Préleveurs
+        doc.setTextColor(primary[0], primary[1], primary[2]);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("2. Équipements Préleveurs 24h :", rightX, eqY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+
+        if (state.presencePreleveur) {
+          doc.text(`• Présence de préleveur(s) : OUI`, rightX + 2, eqY + 4.5);
+          const freqTxt = state.preleveurAsservissement === 'débit'
+            ? `Tous les ${preleveurFrequenceDebit.value || '-'} m³`
+            : `Toutes les ${preleveurFrequenceTemps.value || '-'} minutes`;
+          doc.text(`• Type : ${state.preleveurType} | Asservissement : ${state.preleveurAsservissement}`, rightX + 2, eqY + 9);
+          doc.text(`• Fréquence de prélèvement : ${freqTxt}`, rightX + 2, eqY + 13.5);
+        } else {
+          doc.text(`• Présence de préleveur(s) : NON`, rightX + 2, eqY + 4.5);
+          doc.text(`• Mode de collecte : Échantillonnage manuel / ponctuel`, rightX + 2, eqY + 9);
+        }
+
+        curY += equipHeight + 3;
+
+        // 5. Synthèse volumétrique
+        const qIn = parseFloat(entreeDebit.value);
+        const qOut = parseFloat(sortieDebit.value);
+        let bilanText = "Calcul volumétrique 24h : ";
+        if (!isNaN(qIn) && !isNaN(qOut) && qIn > 0) {
+          const diff = qOut - qIn;
+          const ratio = ((qOut / qIn) * 100).toFixed(1);
+          bilanText += `Ratio Débit Sortie / Entrée = ${ratio}% (Écart hydraulique : ${diff > 0 ? '+' : ''}${diff.toFixed(1)} m³) — Données cohérentes pour le bilan d'autosurveillance.`;
+        } else {
+          bilanText += "Enregistrements volumétriques continus 24 heures conformes aux prescriptions réglementaires.";
+        }
+
+        doc.setFillColor(241, 245, 249);
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin, curY, contentWidth, 7, 1.5, 1.5, 'FD');
+        doc.setTextColor(primary[0], primary[1], primary[2]);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text(bilanText, margin + 4, curY + 4.6);
+
+        curY += 10;
+
+        // 6. Photographies
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(primary[0], primary[1], primary[2]);
+        doc.text("JUSTIFICATIFS PHOTOGRAPHIQUES OFFICIELS DES PRÉLÈVEMENTS", margin, curY);
+
+        curY += 3;
+        const photoWidth = (contentWidth - 6) / 2; // 90mm
+        const photoHeight = 74;
+
+        // Cadre Photo Entrée
+        doc.setDrawColor(186, 230, 253);
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(colEntreeX, curY, photoWidth, photoHeight, 1.5, 1.5, 'FD');
+        doc.setFillColor(entreeColor[0], entreeColor[1], entreeColor[2]);
+        doc.roundedRect(colEntreeX, curY, photoWidth, 5.5, 1.5, 1.5, 'F');
+        doc.rect(colEntreeX, curY + 2.5, photoWidth, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("PHOTO : PRÉLEVEUR ENTRÉE (Eaux Brutes)", colEntreeX + 4, curY + 3.8);
+
+        const imgAreaX = colEntreeX + 2;
+        const imgAreaY = curY + 7;
+        const maxImgW = photoWidth - 4;
+        const maxImgH = photoHeight - 13.5;
+
+        if (entreeImg) {
+          try {
+            let renderW = maxImgW;
+            let renderH = renderW / entreeImg.ratio;
+            if (renderH > maxImgH) {
+              renderH = maxImgH;
+              renderW = renderH * entreeImg.ratio;
+            }
+            const posX = imgAreaX + (maxImgW - renderW) / 2;
+            const posY = imgAreaY + (maxImgH - renderH) / 2;
+            doc.setFillColor(241, 245, 249);
+            doc.rect(imgAreaX, imgAreaY, maxImgW, maxImgH, 'F');
+            doc.addImage(entreeImg.canvas, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
+            doc.setDrawColor(203, 213, 225);
+            doc.rect(posX, posY, renderW, renderH, 'D');
+
+            doc.setFillColor(248, 250, 252);
+            doc.rect(colEntreeX + 1, curY + photoHeight - 5.5, photoWidth - 2, 4.8, 'F');
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6);
+            doc.text(`Prise le ${entreeDate.value} à ${entreeHeure.value} • T: ${entreeTemperature.value}°C • Q: ${entreeDebit.value} m³`, colEntreeX + 3, curY + photoHeight - 2);
+          } catch(e) {}
+        } else {
+          doc.setTextColor(160, 174, 192);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(7.5);
+          doc.text("Aucune photo capturée", colEntreeX + photoWidth / 2, curY + 35, { align: 'center' });
+        }
+
+        // Cadre Photo Sortie
+        doc.setDrawColor(167, 243, 208);
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(colSortieX, curY, photoWidth, photoHeight, 1.5, 1.5, 'FD');
+        doc.setFillColor(sortieColor[0], sortieColor[1], sortieColor[2]);
+        doc.roundedRect(colSortieX, curY, photoWidth, 5.5, 1.5, 1.5, 'F');
+        doc.rect(colSortieX, curY + 2.5, photoWidth, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("PHOTO : PRÉLEVEUR SORTIE (Rejet Traité)", colSortieX + 4, curY + 3.8);
+
+        const imgAreaSortieX = colSortieX + 2;
+        const imgAreaSortieY = curY + 7;
+
+        if (sortieImg) {
+          try {
+            let renderW = maxImgW;
+            let renderH = renderW / sortieImg.ratio;
+            if (renderH > maxImgH) {
+              renderH = maxImgH;
+              renderW = renderH * sortieImg.ratio;
+            }
+            const posX = imgAreaSortieX + (maxImgW - renderW) / 2;
+            const posY = imgAreaSortieY + (maxImgH - renderH) / 2;
+            doc.setFillColor(241, 245, 249);
+            doc.rect(imgAreaSortieX, imgAreaSortieY, maxImgW, maxImgH, 'F');
+            doc.addImage(sortieImg.canvas, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
+            doc.setDrawColor(203, 213, 225);
+            doc.rect(posX, posY, renderW, renderH, 'D');
+
+            doc.setFillColor(248, 250, 252);
+            doc.rect(colSortieX + 1, curY + photoHeight - 5.5, photoWidth - 2, 4.8, 'F');
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6);
+            doc.text(`Prise le ${sortieDate.value} à ${sortieHeure.value} • T: ${sortieTemperature.value}°C • Q: ${sortieDebit.value} m³`, colSortieX + 3, curY + photoHeight - 2);
+          } catch(e) {}
+        } else {
+          doc.setTextColor(160, 174, 192);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(7.5);
+          doc.text("Aucune photo capturée", colSortieX + photoWidth / 2, curY + 35, { align: 'center' });
+        }
+
+        curY += photoHeight + 3.5;
+
+        // 7. Observations
+        if (observations.value && observations.value.trim()) {
+          doc.setFillColor(254, 252, 232);
+          doc.setDrawColor(254, 240, 138);
+          doc.roundedRect(margin, curY, contentWidth, 12, 1.5, 1.5, 'FD');
+          doc.setTextColor(146, 64, 14);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.text("Remarques / Observations d'exploitation :", margin + 3, curY + 4);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(6.8);
+          doc.setTextColor(50, 50, 50);
+          const splitObs = doc.splitTextToSize(observations.value.trim(), contentWidth - 8);
+          doc.text(splitObs.slice(0, 2), margin + 3, curY + 8);
+        }
+
+        // 8. Pied de page avec mention obligatoire
+        const footerY = pageHeight - 11;
+        doc.setDrawColor(226, 232, 240);
+        doc.line(margin, footerY - 2.5, pageWidth - margin, footerY - 2.5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.8);
+        doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+        doc.text("Transmission réglementaire : Bilan d'autosurveillance STEP 24h avec débitmètres et préleveurs asservis", margin, footerY);
+        doc.text("Fiche d'intervention terrain certifiée conforme — Prélèvements 24 heures et photographies certifiées", margin, footerY + 3.5);
+
+        // Mention d'auteur exigée
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(primary[0], primary[1], primary[2]);
+        doc.text("Créé par Laurent Juillien avec l'assistance de l'IA", pageWidth - margin, footerY + 1.5, { align: 'right' });
+
+        const blob = doc.output('blob');
+        const cleanName = (nomStep.value || 'STEP').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const cleanD = (dateAutosurveillance.value || '2026').replace(/-/g, '');
+        const fileName = `Bilan_Autosurveillance_${cleanName}_${cleanD}.pdf`;
+
+        return { blob, fileName };
+      }
+
+      function downloadFile(blob, fileName) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+      }
+
+      // Synthèse textuelle pour transmission
+      function generateReportSummary() {
+        const hasDebits = entreeDebit.value && sortieDebit.value && !isNaN(Number(entreeDebit.value)) && !isNaN(Number(sortieDebit.value)) && Number(entreeDebit.value) > 0;
+        const ratio = hasDebits ? ((Number(sortieDebit.value) / Number(entreeDebit.value)) * 100).toFixed(1) : null;
+        const delta = hasDebits ? (Number(sortieDebit.value) - Number(entreeDebit.value)).toFixed(1) : null;
+
+        const lines = [
+          '📋 *BILAN D\'AUTOSURVEILLANCE STEP 24H*',
+          '--------------------------------------',
+          '🏢 *Station* : ' + (nomStep.value || 'Non précisée'),
+          '📅 *Date du bilan* : ' + (dateAutosurveillance.value || 'Non précisée')
+        ];
+        if (technicienNom.value) lines.push('👷 *Technicien* : ' + technicienNom.value);
+        if (meteo.value) lines.push('⛅ *Météo* : ' + meteo.value);
+
+        lines.push('');
+        lines.push('🔹 *ENTRÉE (Eaux Brutes)*');
+        lines.push('  • Relève : ' + (entreeHeure.value || '-') + ' (' + (entreeDate.value || '-') + ')');
+        lines.push('  • ' + (state.presencePreleveur ? 'Température préleveur' : "Température de l'eau prélevée") + ' : ' + (entreeTemperature.value ? entreeTemperature.value + ' °C' : '-'));
+        if (state.entreeHasDebimetre) {
+          lines.push('  • Débitmètre : OUI (Débit mesuré 24h : ' + (entreeDebit.value ? Number(entreeDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
+        } else {
+          lines.push('  • Débitmètre : NON (Débit estimé : ' + (entreeDebit.value ? Number(entreeDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
+          lines.push('    → Pompes : ' + (entreeTempsMarchePompes.value || '-') + ' h @ ' + (entreeDebitPompeNominal.value || '-') + ' m³/h');
+        }
+        lines.push('  • Photo : ' + (state.entreePhoto ? '✓ Capturée' : 'Non jointe'));
+
+        lines.push('');
+        lines.push('🔹 *SORTIE (Eaux Traitées / Rejet)*');
+        lines.push('  • Relève : ' + (sortieHeure.value || '-') + ' (' + (sortieDate.value || '-') + ')');
+        lines.push('  • ' + (state.presencePreleveur ? 'Température préleveur' : "Température de l'eau prélevée") + ' : ' + (sortieTemperature.value ? sortieTemperature.value + ' °C' : '-'));
+        if (state.sortieHasDebimetre) {
+          lines.push('  • Débitmètre : OUI (Débit mesuré 24h : ' + (sortieDebit.value ? Number(sortieDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
+        } else {
+          lines.push('  • Débitmètre : NON (Débit estimé : ' + (sortieDebit.value ? Number(sortieDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
+          lines.push('    → Pompes : ' + (sortieTempsMarchePompes.value || '-') + ' h @ ' + (sortieDebitPompeNominal.value || '-') + ' m³/h');
+        }
+        lines.push('  • Photo : ' + (state.sortiePhoto ? '✓ Capturée' : 'Non jointe'));
+
+        lines.push('');
+        lines.push('⚙️ *PARAMÈTRES DES PRÉLEVEURS*');
+        if (state.presencePreleveur) {
+          lines.push('  • Présence de préleveur(s) : OUI');
+          lines.push('  • Type : ' + state.preleveurType);
+          lines.push('  • Asservissement : ' + (state.preleveurAsservissement === 'débit' ? 'Au débit' : 'Au temps'));
+          if (state.preleveurAsservissement === 'débit') {
+            lines.push('  • Fréquence : Tous les ' + (preleveurFrequenceDebit.value || '-') + ' m³');
+          } else {
+            lines.push('  • Fréquence : Toutes les ' + (preleveurFrequenceTemps.value || '-') + ' minutes');
+          }
+        } else {
+          lines.push('  • Présence de préleveur(s) : NON (Échantillonnage ponctuel)');
+        }
+
+        if (ratio) {
+          lines.push('');
+          lines.push('📊 *SYNTHÈSE HYDRAULIQUE*');
+          lines.push('  • Ratio Sortie / Entrée : ' + ratio + ' %');
+          if (delta) lines.push('  • Écart : ' + (Number(delta) > 0 ? '+' + delta : delta) + ' m³');
+        }
+
+        if (observations.value.trim()) {
+          lines.push('');
+          lines.push('📝 *Remarques terrain* :');
+          lines.push(observations.value.trim());
+        }
+
+        lines.push('');
+        lines.push('📎 *Document PDF officiel joint* : ' + (state.lastFileName || 'Bilan_Autosurveillance.pdf'));
+        lines.push('(Le rapport certifié complet avec photographies horodatées est joint au format PDF)');
+
+        return lines.join('\n');
+      }
+
+      // Envoi WhatsApp avec garantie du document PDF
+      async function triggerWhatsAppShare() {
+        const text = generateReportSummary();
+        // 1. Déclencher le téléchargement local du PDF si pas encore fait
+        if (state.lastBlob) {
+          downloadFile(state.lastBlob, state.lastFileName);
+        }
+
+        // 2. Partage Web Share direct du fichier PDF sur mobile
+        if (state.lastBlob && navigator.share && navigator.canShare) {
+          try {
+            const file = new File([state.lastBlob], state.lastFileName || 'Bilan_Autosurveillance.pdf', { type: 'application/pdf' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: 'Bilan Autosurveillance STEP - ' + nomStep.value,
+                text: text,
+                files: [file]
+              });
+              return;
+            }
+          } catch (e) {
+            if (e.name === 'AbortError') return;
+          }
+        }
+
+        // 3. Fallback lien WhatsApp
+        const url = 'https://wa.me/?text=' + encodeURIComponent(text);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+
+      // Envoi Email avec garantie du document PDF
+      async function triggerEmailSend() {
+        const text = generateReportSummary();
+        // 1. Télécharger le fichier PDF pour s'assurer qu'il est immédiatement disponible
+        if (state.lastBlob) {
+          downloadFile(state.lastBlob, state.lastFileName);
+        }
+
+        // 2. Tenter le partage natif par l'application de messagerie avec le fichier PDF joint
+        if (state.lastBlob && navigator.share && navigator.canShare) {
+          try {
+            const file = new File([state.lastBlob], state.lastFileName || 'Bilan_Autosurveillance.pdf', { type: 'application/pdf' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: '[Autosurveillance STEP] Bilan 24h - ' + (nomStep.value || 'Station'),
+                text: text,
+                files: [file]
+              });
+              return;
+            }
+          } catch (e) {
+            if (e.name === 'AbortError') return;
+          }
+        }
+
+        // 3. Fallback mailto:
+        const recipient = (destinataireEmail ? destinataireEmail.value : '').trim();
+        const subject = '[Autosurveillance STEP] Bilan 24h - ' + (nomStep.value || 'STEP') + ' (' + (dateAutosurveillance.value || '') + ')';
+        const body = 'Bonjour,\n\nVeuillez trouver ci-dessous le bilan d\'autosurveillance 24h pour la station ' + nomStep.value + '.\nLe document PDF officiel certifié (' + (state.lastFileName || 'rapport.pdf') + ') a été généré et est joint en pièce jointe au format PDF.\n\n' + text + '\n\nCordialement,\n' + (technicienNom.value || 'L\'exploitant de la station');
+
+        const mailtoUrl = 'mailto:' + encodeURIComponent(recipient) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        window.location.href = mailtoUrl;
+      }
+
+      // Soumission formulaire
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!validateForm()) return;
+
+        btnSubmit.disabled = true;
+        btnText.textContent = "Génération du PDF officiel & photos...";
+        btnIconSend.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+
+        try {
+          await new Promise(r => setTimeout(r, 200));
+
+          const pdfRes = await buildPdf();
+          state.lastBlob = pdfRes.blob;
+          state.lastFileName = pdfRes.fileName;
+          state.lastPdfRes = pdfRes;
+
+          // 1. Télécharger directement le PDF
+          downloadFile(pdfRes.blob, pdfRes.fileName);
+
+          // 2. Mettre à jour la section 4
+          if (section4SharePanel && section4FileName) {
+            section4FileName.textContent = pdfRes.fileName;
+            section4SharePanel.classList.remove('hidden');
+          }
+
+          // 3. Ouvrir la modale
+          modalFileName.textContent = pdfRes.fileName;
+          const modalPdfFrame = document.getElementById('modalPdfFrame');
+          if (modalPdfFrame) {
+            modalPdfFrame.src = URL.createObjectURL(pdfRes.blob);
+          }
+          successModal.classList.remove('hidden');
+
+        } catch (err) {
+          console.error(err);
+          alert("Erreur lors de la génération du rapport : " + err.message);
+        } finally {
+          btnSubmit.disabled = false;
+          btnText.textContent = "Générer le Rapport PDF (Prêt pour WhatsApp & Mail)";
+          btnIconSend.classList.remove('hidden');
+          btnSpinner.classList.add('hidden');
+        }
+      });
+
+      // Boutons section 4
+      if (section4BtnWhatsApp) section4BtnWhatsApp.addEventListener('click', triggerWhatsAppShare);
+      if (section4BtnEmail) section4BtnEmail.addEventListener('click', triggerEmailSend);
+      if (section4BtnDownload) section4BtnDownload.addEventListener('click', () => {
+        if (state.lastBlob) downloadFile(state.lastBlob, state.lastFileName);
+      });
+
+      // Boutons modale
+      modalBtnClose.addEventListener('click', () => successModal.classList.add('hidden'));
+      if (modalBtnBottomClose) modalBtnBottomClose.addEventListener('click', () => successModal.classList.add('hidden'));
+      modalBtnDownload.addEventListener('click', () => {
+        if (state.lastBlob) downloadFile(state.lastBlob, state.lastFileName);
+      });
+      modalBtnWhatsApp.addEventListener('click', triggerWhatsAppShare);
+      modalBtnEmail.addEventListener('click', triggerEmailSend);
+      if (modalBtnFooterWhatsApp) modalBtnFooterWhatsApp.addEventListener('click', triggerWhatsAppShare);
+      if (modalBtnFooterEmail) modalBtnFooterEmail.addEventListener('click', triggerEmailSend);
+
+      if (modalBtnCopy) {
+        modalBtnCopy.addEventListener('click', async function() {
+          const text = generateReportSummary();
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch (e) {
+            const t = document.createElement('textarea');
+            t.value = text;
+            document.body.appendChild(t);
+            t.select();
+            document.execCommand('copy');
+            document.body.removeChild(t);
+          }
+          if (modalCopyText) {
+            modalCopyText.textContent = 'Copié !';
+            setTimeout(() => { modalCopyText.textContent = 'Copier texte'; }, 2000);
+          }
+        });
+      }
+
+      // Exemple démo
+      btnExemple.addEventListener('click', function() {
+        nomStep.value = "STEP Val de Loire Métropole (45 000 EH)";
+        dateAutosurveillance.value = today;
+        technicienNom.value = "Laurent Juillien";
+        meteo.value = "Soleil";
+        observations.value = "Fonctionnement nominal des préleveurs asservis au débit 24h. Aspect du rejet limpide en sortie de clarificateur secondaire. Températures de conservation conformes.";
+        
+        setEntreeDebimetre(true);
+        entreeDate.value = today;
+        entreeHeure.value = defaultHour;
+        entreeTemperature.value = "3.8";
+        entreeDebit.value = "4850.5";
+        entreeTempsMarchePompes.value = "18.2";
+        entreeDebitPompeNominal.value = "260";
+
+        setSortieDebimetre(true);
+        sortieDate.value = today;
+        sortieHeure.value = defaultHour;
+        sortieTemperature.value = "3.5";
+        sortieDebit.value = "4620.0";
+        sortieTempsMarchePompes.value = "17.8";
+        sortieDebitPompeNominal.value = "255";
+
+        destinataireEmail.value = "autosurveillance@grand-bassin.fr";
+
+        // Dessiner des toiles témoins
+        function makeSample(title, col) {
+          const c = document.createElement('canvas');
+          c.width = 600; c.height = 450;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,600,450);
+          ctx.fillStyle = col; ctx.fillRect(0,0,600,10);
+          ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px sans-serif'; ctx.fillText(title, 20, 50);
+          ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText('Contrôle réglementaire 24h • Horodatage certifié', 20, 80);
+          return c.toDataURL('image/jpeg', 0.85);
+        }
+
+        state.entreePhoto = makeSample("PRELEVEUR REFRIGERE ENTREE", "#0284c7");
+        entreePreviewImg.src = state.entreePhoto;
+        entreePlaceholder.classList.add('hidden');
+        entreePreviewContainer.classList.remove('hidden');
+
+        state.sortiePhoto = makeSample("PRELEVEUR REFRIGERE SORTIE", "#059669");
+        sortiePreviewImg.src = state.sortiePhoto;
+        sortiePlaceholder.classList.add('hidden');
+        sortiePreviewContainer.classList.remove('hidden');
+
+        updateVolumetricRatio();
+      });
+
+      // Reset
+      btnResetForm.addEventListener('click', function() {
+        if (confirm("Réinitialiser le formulaire ?")) {
+          form.reset();
+          state.entreePhoto = null;
+          state.sortiePhoto = null;
+          entreePreviewImg.src = '';
+          sortiePreviewImg.src = '';
+          entreePreviewContainer.classList.add('hidden');
+          sortiePreviewContainer.classList.add('hidden');
+          entreePlaceholder.classList.remove('hidden');
+          sortiePlaceholder.classList.remove('hidden');
+          setEntreeDebimetre(true);
+          setSortieDebimetre(true);
+          setPresencePreleveur(true);
+          dateAutosurveillance.value = today;
+          entreeDate.value = today;
+          sortieDate.value = today;
+          entreeHeure.value = defaultHour;
+          sortieHeure.value = defaultHour;
+          updateVolumetricRatio();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

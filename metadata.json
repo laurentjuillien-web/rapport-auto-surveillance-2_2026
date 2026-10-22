@@ -1,0 +1,6 @@
+{
+  "name": "Autosurveillance STEP - Saisie Terrain",
+  "description": "Application pour techniciens de traitement sur le terrain pour la saisie des bilans d'autosurveillance des stations d'épuration (STEP) avec capture photo, génération de rapport PDF officiel et partage direct par WhatsApp ou par e-mail.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

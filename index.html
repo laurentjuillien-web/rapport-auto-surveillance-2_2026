@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script>
+      // Empêche les erreurs de connexion WebSocket HMR de Vite dans l'environnement d'aperçu en iframe
+      (function() {
+        if (typeof window !== 'undefined') {
+          window.addEventListener('unhandledrejection', function(e) {
+            if (e.reason && (
+              (typeof e.reason.message === 'string' && (e.reason.message.includes('WebSocket') || e.reason.message.includes('vite'))) ||
+              (typeof e.reason.stack === 'string' && e.reason.stack.includes('createWebSocketModuleRunnerTransport'))
+            )) {
+              e.preventDefault();
+            }
+          });
+          window.addEventListener('error', function(e) {
+            if (e.message && (e.message.includes('WebSocket') || e.message.includes('vite-hmr'))) {
+              e.preventDefault();
+            }
+          });
+
+          const OrigWS = window.WebSocket;
+          if (OrigWS) {
+            window.WebSocket = function(url, protocols) {
+              if (protocols === 'vite-hmr' || (typeof url === 'string' && url.includes('token='))) {
+                const fake = new EventTarget();
+                fake.readyState = 1;
+                fake.OPEN = 1;
+                fake.CONNECTING = 0;
+                fake.CLOSING = 2;
+                fake.CLOSED = 3;
+                fake.send = function() {};
+                fake.close = function() {};
+                return fake;
+              }
+              return new OrigWS(url, protocols);
+            };
+            window.WebSocket.prototype = OrigWS.prototype;
+            window.WebSocket.OPEN = 1;
+            window.WebSocket.CONNECTING = 0;
+            window.WebSocket.CLOSING = 2;
+            window.WebSocket.CLOSED = 3;
+          }
+        }
+      })();
+    </script>
+    <title>Autosurveillance STEP - Saisie Terrain</title>
+    <meta name="description" content="Application pour techniciens de traitement sur le terrain pour la saisie des bilans d'autosurveillance des stations d'épuration (STEP) avec capture photo, génération de rapport PDF officiel et partage direct par WhatsApp ou par e-mail." />
+    <meta property="og:title" content="Autosurveillance STEP - Saisie Terrain" />
+    <meta property="og:description" content="Application pour techniciens de traitement sur le terrain pour la saisie des bilans d'autosurveillance des stations d'épuration (STEP) avec capture photo, génération de rapport PDF officiel et partage direct par WhatsApp ou par e-mail." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
