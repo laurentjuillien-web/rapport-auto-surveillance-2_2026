@@ -386,10 +386,331 @@ export default function App() {
                 <MessageCircle className="w-4 h-4 fill-white" />
                 <span>WhatsApp</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setShowEmailModal(true)}
+                className="px-3.5 py-2.5 bg-sky-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Mail className="w-4 h-4" />
+                <span>E-mail</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPdfModal(true)}
+                className="px-3.5 py-2.5 bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Aperçu PDF</span>
+              </button>
             </div>
           </div>
         )}
+
+        {shareFeedback && (
+          <div className="bg-sky-50 border border-sky-300 text-sky-900 p-3 rounded-xl text-xs font-medium">
+            {shareFeedback}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 1. INFORMATIONS GENERALES */}
+          <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+            <h2 className="text-base font-bold text-slate-900 mb-4">1. En-tête &amp; Informations Générales</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nom de la STEP *</label>
+                <input
+                  type="text"
+                  value={formData.nomStep}
+                  onChange={(e) => handleChange('nomStep', e.target.value)}
+                  placeholder="ex: STEP Goderville"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Date *</label>
+                <input
+                  type="date"
+                  value={formData.dateAutosurveillance}
+                  onChange={(e) => handleChange('dateAutosurveillance', e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Technicien</label>
+                <input
+                  type="text"
+                  value={formData.technicienNom}
+                  onChange={(e) => handleChange('technicienNom', e.target.value)}
+                  placeholder="ex: Laurent JUILLIEN"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Météo</label>
+                <select
+                  value={formData.meteo}
+                  onChange={(e) => handleChange('meteo', e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                >
+                  <option value="Soleil">Soleil</option>
+                  <option value="Pluie">Pluie</option>
+                  <option value="Neige">Neige</option>
+                  <option value="Orage">Orage</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* 2. ENTREE & SORTIE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+              <h2 className="text-base font-bold text-sky-900">Point Entrée (Eaux Brutes)</h2>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Mode de mesure</label>
+                <div className="flex gap-4 text-xs font-medium">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={formData.entreeHasDebimetre}
+                      onChange={() => handleChange('entreeHasDebimetre', true)}
+                    /> Débitmètre
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={!formData.entreeHasDebimetre}
+                      onChange={() => handleChange('entreeHasDebimetre', false)}
+                    /> Estimé (Pompes)
+                  </label>
+                </div>
+              </div>
+
+              {formData.entreeHasDebimetre ? (
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Débit cumulé 24h (m³)</label>
+                  <input
+                    type="number"
+                    value={formData.entreeDebit}
+                    onChange={(e) => handleChange('entreeDebit', e.target.value)}
+                    placeholder="ex: 2580"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Temps marche (h)</label>
+                    <input
+                      type="number"
+                      value={formData.entreeTempsMarchePompes}
+                      onChange={(e) => handleChange('entreeTempsMarchePompes', e.target.value)}
+                      placeholder="ex: 1.5"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Débit nominal (m³/h)</label>
+                    <input
+                      type="number"
+                      value={formData.entreeDebitPompeNominal}
+                      onChange={(e) => handleChange('entreeDebitPompeNominal', e.target.value)}
+                      placeholder="ex: 30"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Heure relève</label>
+                  <input
+                    type="time"
+                    value={formData.entreeHeure}
+                    onChange={(e) => handleChange('entreeHeure', e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Température (°C)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.entreeTemperature}
+                    onChange={(e) => handleChange('entreeTemperature', e.target.value)}
+                    placeholder="ex: 2.1"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1">Photo Entrée</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={entreeFileInputRef}
+                  onChange={(e) => e.target.files?.[0] && handlePhotoUpload(e.target.files[0], 'entree')}
+                  className="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+                />
+              </div>
+            </section>
+
+            <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+              <h2 className="text-base font-bold text-emerald-900">Point Sortie (Rejet Traité)</h2>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Mode de mesure</label>
+                <div className="flex gap-4 text-xs font-medium">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={formData.sortieHasDebimetre}
+                      onChange={() => handleChange('sortieHasDebimetre', true)}
+                    /> Débitmètre
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={!formData.sortieHasDebimetre}
+                      onChange={() => handleChange('sortieHasDebimetre', false)}
+                    /> Estimé (Pompes)
+                  </label>
+                </div>
+              </div>
+
+              {formData.sortieHasDebimetre ? (
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Débit cumulé 24h (m³)</label>
+                  <input
+                    type="number"
+                    value={formData.sortieDebit}
+                    onChange={(e) => handleChange('sortieDebit', e.target.value)}
+                    placeholder="ex: 2680"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Temps marche (h)</label>
+                    <input
+                      type="number"
+                      value={formData.sortieTempsMarchePompes}
+                      onChange={(e) => handleChange('sortieTempsMarchePompes', e.target.value)}
+                      placeholder="ex: 2"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">Débit nominal (m³/h)</label>
+                    <input
+                      type="number"
+                      value={formData.sortieDebitPompeNominal}
+                      onChange={(e) => handleChange('sortieDebitPompeNominal', e.target.value)}
+                      placeholder="ex: 30"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Heure relève</label>
+                  <input
+                    type="time"
+                    value={formData.sortieHeure}
+                    onChange={(e) => handleChange('sortieHeure', e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Température (°C)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.sortieTemperature}
+                    onChange={(e) => handleChange('sortieTemperature', e.target.value)}
+                    placeholder="ex: 2.5"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1">Photo Sortie</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={sortieFileInputRef}
+                  onChange={(e) => e.target.files?.[0] && handlePhotoUpload(e.target.files[0], 'sortie')}
+                  className="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* OBSERVATIONS */}
+          <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Observations / Remarques d'exploitation</label>
+            <textarea
+              rows={3}
+              value={formData.observations}
+              onChange={(e) => handleChange('observations', e.target.value)}
+              placeholder="Remarques particulières..."
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+            />
+          </section>
+
+          <button
+            type="submit"
+            className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-extrabold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Download className="w-5 h-5" />
+            <span>Générer et Télécharger le Rapport PDF Officiel</span>
+          </button>
+        </form>
       </main>
+
+      {showPdfModal && generatedPdf && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+          <div className="bg-white w-full max-w-4xl h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+              <h3 className="font-bold">Aperçu du Rapport PDF</h3>
+              <button onClick={() => setShowPdfModal(false)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-100 p-2">
+              <iframe src={generatedPdf.blobUrl} className="w-full h-full rounded-xl border bg-white" title="PDF" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <h3 className="font-extrabold text-slate-900">Transmission par E-mail</h3>
+              <button onClick={() => setShowEmailModal(false)} className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-600">Le rapport PDF officiel va être transmis via votre client de messagerie.</p>
+            <button
+              type="button"
+              disabled={emailSending}
+              onClick={handleSendEmailDirect}
+              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {emailSending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <span>Ouvrir l'application de messagerie</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
