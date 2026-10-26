@@ -67,7 +67,6 @@ export default function App() {
       technicienNom: '',
       meteo: 'Soleil',
       observations: '',
-      // 1. Débitmètres
       entreeHasDebimetre: true,
       entreeDebit: '',
       entreeTempsMarchePompes: '',
@@ -78,13 +77,11 @@ export default function App() {
       sortieTempsMarchePompes: '',
       sortieDebitPompeNominal: '',
       sortieDebitEstime: '',
-      // 2. Préleveurs
       presencePreleveur: true,
       preleveurType: 'ISO monoflacon dépression',
       preleveurAsservissement: 'débit',
       preleveurFrequenceDebit: '10',
       preleveurFrequenceTemps: '15',
-      // Bilan Entrée & Sortie
       entreeDate: today,
       entreeHeure: defaultHour,
       entreeTemperature: '',
@@ -104,28 +101,19 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState('');
   const [generatedPdf, setGeneratedPdf] = useState<GeneratedPdfResult | null>(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
-  const [showPhotoModal, setShowPhotoModal] = useState<{ title: string; src: string } | null>(null);
   const [showHtmlExportModal, setShowHtmlExportModal] = useState(false);
-  const [draftSavedAlert, setDraftSavedAlert] = useState(false);
-  const [copiedSummary, setCopiedSummary] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
-  const [showSummaryPreview, setShowSummaryPreview] = useState(false);
 
-  // Modale d'envoi d'e-mail avec pièce jointe PDF
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string; previewUrl?: string } | null>(null);
+  const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
 
   const entreeFileInputRef = useRef<HTMLInputElement>(null);
   const sortieFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sauvegarde automatique du brouillon local
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-      setDraftSavedAlert(true);
-      const t = setTimeout(() => setDraftSavedAlert(false), 2000);
-      return () => clearTimeout(t);
     } catch {
       try {
         const light = { ...formData, entreePhoto: null, sortiePhoto: null };
@@ -140,7 +128,6 @@ export default function App() {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
 
-      // Calcul automatique de l'estimation de débit Entrée si pas de débitmètre
       if (
         !updated.entreeHasDebimetre &&
         (field === 'entreeTempsMarchePompes' ||
@@ -156,7 +143,6 @@ export default function App() {
         }
       }
 
-      // Calcul automatique de l'estimation de débit Sortie si pas de débitmètre
       if (
         !updated.sortieHasDebimetre &&
         (field === 'sortieTempsMarchePompes' ||
@@ -184,66 +170,13 @@ export default function App() {
     }
   };
 
-  const handlePhotoUpload = async (file: File, type: 'entree' | 'sortie') => {
-    try {
-      setGenerationStep('compressing');
-      setStatusMessage(`Optimisation de la photo ${type === 'entree' ? 'Entrée' : 'Sortie'}...`);
-      const { dataUrl, fileName } = await processFieldPhoto(file);
-
-      if (type === 'entree') {
-        setFormData((prev) => ({
-          ...prev,
-          entreePhoto: dataUrl,
-          entreePhotoNom: fileName,
-        }));
-        setErrors((prev) => {
-          const c = { ...prev };
-          delete c.entreePhoto;
-          return c;
-        });
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          sortiePhoto: dataUrl,
-          sortiePhotoNom: fileName,
-        }));
-        setErrors((prev) => {
-          const c = { ...prev };
-          delete c.sortiePhoto;
-          return c;
-        });
-      }
-      setGenerationStep('idle');
-      setStatusMessage('');
-    } catch (err: unknown) {
-      setGenerationStep('idle');
-      const message = err instanceof Error ? err.message : "Erreur inattendue";
-      alert("Erreur lors de la capture photo : " + message);
-    }
-  };
-
-  const removePhoto = (type: 'entree' | 'sortie') => {
-    if (type === 'entree') {
-      setFormData((prev) => ({ ...prev, entreePhoto: null, entreePhotoNom: '' }));
-      if (entreeFileInputRef.current) entreeFileInputRef.current.value = '';
-    } else {
-      setFormData((prev) => ({ ...prev, sortiePhoto: null, sortiePhotoNom: '' }));
-      if (sortieFileInputRef.current) sortieFileInputRef.current.value = '';
-    }
-  };
-
-  // Partage vers WhatsApp avec attachement PDF
   const handleShareWhatsApp = async () => {
     if (!generatedPdf) return;
     try {
       downloadPdfBlob(generatedPdf.blob, generatedPdf.fileName);
       const result = await shareToWhatsApp(formData, generatedPdf.blob, generatedPdf.fileName);
       if (result.success) {
-        if (result.method === 'native_file') {
-          setShareFeedback("Fichier PDF officiel et récapitulatif partagés avec succès !");
-        } else {
-          setShareFeedback("Fichier PDF téléchargé sur votre appareil et WhatsApp ouvert avec la synthèse !");
-        }
+        setShareFeedback("Fichier PDF téléchargé et WhatsApp ouvert avec la synthèse !");
         setTimeout(() => setShareFeedback(null), 5000);
       }
     } catch (e) {
@@ -251,15 +184,13 @@ export default function App() {
     }
   };
 
-  // Ouverture du dialogue d'envoi par e-mail
   const handleOpenEmailModal = () => {
     if (!generatedPdf) return;
     setEmailStatus(null);
     setShowEmailModal(true);
   };
 
-  // Envoi réel par e-mail via le client natif / téléchargement (adapté à GitHub Pages)
-  const handleSendEmailDirect = async (recipient: string) => {
+  const handleSendEmailDirect = async () => {
     if (!generatedPdf) return;
     try {
       setEmailSending(true);
@@ -281,68 +212,285 @@ export default function App() {
     }
   };
 
-  const handleSendEmail = () => {
-    handleOpenEmailModal();
-  };
-
-  const handleShareEmailNative = async () => {
-    if (!generatedPdf) return;
-    try {
-      const shared = await shareReportNatively(formData, generatedPdf.blob, generatedPdf.fileName);
-      if (shared) {
-        setShareFeedback("Rapport PDF officiel transmis via votre application de messagerie.");
-        setTimeout(() => setShareFeedback(null), 4000);
-        setShowEmailModal(false);
-      } else {
-        downloadPdfBlob(generatedPdf.blob, generatedPdf.fileName);
-        sendReportByEmail(formData, generatedPdf.fileName);
-      }
-    } catch (e) {
-      console.error("Erreur partage natif", e);
-    }
-  };
-
-  const handleCopySummary = async () => {
-    if (!generatedPdf) return;
-    const text = generateReportSummary(formData, generatedPdf.fileName);
-    const success = await copyToClipboard(text);
-    if (success) {
-      setCopiedSummary(true);
-      setTimeout(() => setCopiedSummary(false), 2500);
-    }
-  };
-
   const validate = (): boolean => {
     const errs: ValidationErrors = {};
-
     if (!formData.nomStep.trim()) {
       errs.nomStep = "Le nom de la station d'épuration (STEP) est obligatoire.";
     }
     if (!formData.dateAutosurveillance) {
       errs.dateAutosurveillance = "La date de l'autosurveillance est obligatoire.";
     }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
-    // Entrée
-    if (!formData.entreeDate) {
-      errs.entreeDate = "Date de prélèvement obligatoire.";
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setGenerationStep('generating_pdf');
+    setStatusMessage("Génération du document PDF officiel...");
+
+    try {
+      await new Promise((r) => setTimeout(r, 200));
+      const res = await generateAutosurveillancePdf(formData);
+      setGeneratedPdf(res);
+      downloadPdfBlob(res.blob, res.fileName);
+      setGenerationStep('completed');
+      setShowPdfModal(true);
+    } catch (err: unknown) {
+      console.error(err);
+      setGenerationStep('error');
+      alert("Erreur lors de la génération du rapport.");
+    } finally {
+      setGenerationStep('idle');
     }
-    if (!formData.entreeHeure) {
-      errs.entreeHeure = "Heure de relève obligatoire.";
+  };
+
+  const handleLoadSample = () => {
+    const generateSampleCanvas = (title: string, color: string): string => {
+      const c = document.createElement('canvas');
+      c.width = 640;
+      c.height = 480;
+      const ctx = c.getContext('2d');
+      if (!ctx) return '';
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 640, 480);
+      ctx.fillStyle = color;
+      ctx.fillRect(100, 70, 440, 340);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(title, 140, 310);
+      return c.toDataURL('image/jpeg', 0.85);
+    };
+
+    setFormData({
+      nomStep: "STEP Goderville",
+      dateAutosurveillance: today,
+      technicienNom: "Laurent JUILLIEN",
+      meteo: "Soleil",
+      observations: "Essai",
+      entreeHasDebimetre: false,
+      entreeDebit: "45.0",
+      entreeTempsMarchePompes: "1.5",
+      entreeDebitPompeNominal: "30",
+      entreeDebitEstime: "45.0",
+      sortieHasDebimetre: false,
+      sortieDebit: "60.0",
+      sortieTempsMarchePompes: "2",
+      sortieDebitPompeNominal: "30",
+      sortieDebitEstime: "60.0",
+      presencePreleveur: true,
+      preleveurType: "péristaltique",
+      preleveurAsservissement: "débit",
+      preleveurFrequenceDebit: "10",
+      preleveurFrequenceTemps: "15",
+      entreeDate: today,
+      entreeHeure: defaultHour,
+      entreeTemperature: "2.1",
+      entreePhoto: generateSampleCanvas("PHOTO : PRELEVEUR ENTREE", "#0369a1"),
+      entreePhotoNom: "preleveur_entree.jpg",
+      sortieDate: today,
+      sortieHeure: defaultHour,
+      sortieTemperature: "2.5",
+      sortiePhoto: generateSampleCanvas("PHOTO : PRELEVEUR SORTIE", "#047857"),
+      sortiePhotoNom: "preleveur_sortie.jpg",
+      destinataireEmail: 'laurentjuillien@free.fr',
+    });
+    setErrors({});
+  };
+
+  const handleReset = () => {
+    if (confirm("Réinitialiser le formulaire ?")) {
+      localStorage.removeItem(STORAGE_KEY);
+      setFormData({
+        nomStep: '',
+        dateAutosurveillance: today,
+        technicienNom: '',
+        meteo: 'Soleil',
+        observations: '',
+        entreeHasDebimetre: true,
+        entreeDebit: '',
+        entreeTempsMarchePompes: '',
+        entreeDebitPompeNominal: '',
+        entreeDebitEstime: '',
+        sortieHasDebimetre: true,
+        sortieDebit: '',
+        sortieTempsMarchePompes: '',
+        sortieDebitPompeNominal: '',
+        sortieDebitEstime: '',
+        presencePreleveur: true,
+        preleveurType: 'ISO monoflacon dépression',
+        preleveurAsservissement: 'débit',
+        preleveurFrequenceDebit: '10',
+        preleveurFrequenceTemps: '15',
+        entreeDate: today,
+        entreeHeure: defaultHour,
+        entreeTemperature: '',
+        entreePhoto: null,
+        entreePhotoNom: '',
+        sortieDate: today,
+        sortieHeure: defaultHour,
+        sortieTemperature: '',
+        sortiePhoto: null,
+        sortiePhotoNom: '',
+        destinataireEmail: '',
+      });
+      setErrors({});
     }
-    if (formData.entreeTemperature === '' || isNaN(Number(formData.entreeTemperature))) {
-      errs.entreeTemperature = formData.presencePreleveur ? "Température au préleveur requise." : "Température de l'eau prélevée requise.";
-    }
-    if (formData.entreeHasDebimetre) {
-      if (formData.entreeDebit === '' || isNaN(Number(formData.entreeDebit)) || Number(formData.entreeDebit) < 0) {
-        errs.entreeDebit = "Débit cumulé 24h valide requis (>= 0 m³).";
-      }
-    } else {
-      if (!formData.entreeTempsMarchePompes || isNaN(Number(formData.entreeTempsMarchePompes)) || Number(formData.entreeTempsMarchePompes) < 0) {
-        errs.entreeTempsMarchePompes = "Temps de marche des pompes requis (>= 0 h).";
-      }
-      if (formData.entreeDebit === '' || isNaN(Number(formData.entreeDebit)) || Number(formData.entreeDebit) < 0) {
-        errs.entreeDebit = "Estimation du débit requise.";
-      }
-    }
-    if (!formData.entreePhoto) {
-      errs.entreePhoto = formData.presencePreleveur ? "La photo du préleveur Entrée est obligatoire."
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans pb-12">
+      <header className="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-400 flex items-center justify-center text-white">
+              <Droplets className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-base sm:text-lg font-extrabold text-white">
+                Autosurveillance STEP <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-sky-950 text-sky-400">Terrain</span>
+              </h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleLoadSample}
+              className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Exemple</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-xs text-rose-300 bg-rose-950/40 p-2 rounded-xl border border-rose-800 cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto w-full px-3.5 sm:px-6 py-6 flex-1 space-y-6">
+        {generatedPdf && (
+          <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 sm:p-5 text-emerald-950 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm sm:text-base font-extrabold text-emerald-900 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Rapport PDF généré et téléchargé !</span>
+              </h3>
+              <p className="text-xs text-emerald-800 mt-1">Station : <strong>{formData.nomStep}</strong></p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                className="px-3.5 py-2.5 bg-[#25D366] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>WhatsApp</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenEmailModal}
+                className="px-3.5 py-2.5 bg-sky-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Mail className="w-4 h-4" />
+                <span>E-mail</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPdfModal(true)}
+                className="px-3.5 py-2.5 bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Aperçu PDF</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 mb-4">En-tête &amp; Informations Générales</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Nom de la Station d'Épuration (STEP) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.nomStep}
+                  onChange={(e) => handleChange('nomStep', e.target.value)}
+                  placeholder="ex: STEP Goderville"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50/50 focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Date de l'Autosurveillance <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateAutosurveillance}
+                  onChange={(e) => handleChange('dateAutosurveillance', e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50/50 focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            </div>
+          </section>
+
+          <button
+            type="submit"
+            className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-extrabold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Download className="w-5 h-5" />
+            <span>Générer et Télécharger le Rapport PDF Officiel</span>
+          </button>
+        </form>
+      </main>
+
+      {showPdfModal && generatedPdf && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+          <div className="bg-white w-full max-w-4xl h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+              <h3 className="font-bold">Aperçu du Rapport PDF</h3>
+              <button onClick={() => setShowPdfModal(false)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-100 p-2">
+              <iframe src={generatedPdf.blobUrl} className="w-full h-full rounded-xl border bg-white" title="PDF" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b">
+              <h3 className="font-extrabold text-slate-900">Transmission par E-mail</h3>
+              <button onClick={() => setShowEmailModal(false)} className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-600">Le rapport PDF officiel va être transmis via votre client de messagerie.</p>
+            <button
+              type="button"
+              disabled={emailSending}
+              onClick={handleSendEmailDirect}
+              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {emailSending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <span>Ouvrir l'application de messagerie</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
