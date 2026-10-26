@@ -26,23 +26,15 @@ import {
   Share2,
   MessageCircle,
   Mail,
-  Copy,
-  Check,
   Send,
-  Smartphone,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { AutosurveillanceData, ValidationErrors, GenerationStep } from './types';
 import { processFieldPhoto } from './utils/imageUtils';
 import { generateAutosurveillancePdf, downloadPdfBlob, GeneratedPdfResult } from './utils/pdfGenerator';
 import {
   shareToWhatsApp,
-  sendEmailWithPdfAttachment,
   shareReportNatively,
   sendReportByEmail,
-  generateReportSummary,
-  copyToClipboard,
 } from './utils/shareUtils';
 
 const STORAGE_KEY = 'step_autosurveillance_draft_v2';
@@ -101,12 +93,9 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState('');
   const [generatedPdf, setGeneratedPdf] = useState<GeneratedPdfResult | null>(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
-  const [showHtmlExportModal, setShowHtmlExportModal] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
-
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
 
   const entreeFileInputRef = useRef<HTMLInputElement>(null);
   const sortieFileInputRef = useRef<HTMLInputElement>(null);
@@ -170,24 +159,35 @@ export default function App() {
     }
   };
 
+  const handlePhotoUpload = async (file: File, type: 'entree' | 'sortie') => {
+    try {
+      setGenerationStep('compressing');
+      setStatusMessage(`Optimisation de la photo ${type === 'entree' ? 'Entrée' : 'Sortie'}...`);
+      const { dataUrl, fileName } = await processFieldPhoto(file);
+
+      if (type === 'entree') {
+        setFormData((prev) => ({ ...prev, entreePhoto: dataUrl, entreePhotoNom: fileName }));
+      } else {
+        setFormData((prev) => ({ ...prev, sortiePhoto: dataUrl, sortiePhotoNom: fileName }));
+      }
+      setGenerationStep('idle');
+      setStatusMessage('');
+    } catch (err: unknown) {
+      setGenerationStep('idle');
+      alert("Erreur lors de la capture photo.");
+    }
+  };
+
   const handleShareWhatsApp = async () => {
     if (!generatedPdf) return;
     try {
       downloadPdfBlob(generatedPdf.blob, generatedPdf.fileName);
-      const result = await shareToWhatsApp(formData, generatedPdf.blob, generatedPdf.fileName);
-      if (result.success) {
-        setShareFeedback("Fichier PDF téléchargé et WhatsApp ouvert avec la synthèse !");
-        setTimeout(() => setShareFeedback(null), 5000);
-      }
+      await shareToWhatsApp(formData, generatedPdf.blob, generatedPdf.fileName);
+      setShareFeedback("WhatsApp ouvert avec la synthèse !");
+      setTimeout(() => setShareFeedback(null), 5000);
     } catch (e) {
       console.error("Erreur partage WhatsApp", e);
     }
-  };
-
-  const handleOpenEmailModal = () => {
-    if (!generatedPdf) return;
-    setEmailStatus(null);
-    setShowEmailModal(true);
   };
 
   const handleSendEmailDirect = async () => {
@@ -199,14 +199,11 @@ export default function App() {
       if (!shared) {
         sendReportByEmail(formData, generatedPdf.fileName);
       }
-      setShareFeedback("Application de messagerie ouverte et PDF téléchargé !");
+      setShareFeedback("Application de messagerie ouverte !");
       setTimeout(() => setShareFeedback(null), 5000);
       setShowEmailModal(false);
     } catch (err: any) {
-      setEmailStatus({
-        success: false,
-        message: err?.message || "Erreur lors de l'ouverture de la messagerie.",
-      });
+      console.error(err);
     } finally {
       setEmailSending(false);
     }
@@ -214,12 +211,8 @@ export default function App() {
 
   const validate = (): boolean => {
     const errs: ValidationErrors = {};
-    if (!formData.nomStep.trim()) {
-      errs.nomStep = "Le nom de la station d'épuration (STEP) est obligatoire.";
-    }
-    if (!formData.dateAutosurveillance) {
-      errs.dateAutosurveillance = "La date de l'autosurveillance est obligatoire.";
-    }
+    if (!formData.nomStep.trim()) errs.nomStep = "Nom de la STEP obligatoire.";
+    if (!formData.dateAutosurveillance) errs.dateAutosurveillance = "Date obligatoire.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -395,7 +388,7 @@ export default function App() {
               </button>
               <button
                 type="button"
-                onClick={handleOpenEmailModal}
+                onClick={() => setShowEmailModal(true)}
                 className="px-3.5 py-2.5 bg-sky-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Mail className="w-4 h-4" />
@@ -413,84 +406,47 @@ export default function App() {
           </div>
         )}
 
+        {shareFeedback && (
+          <div className="bg-sky-50 border border-sky-300 text-sky-900 p-3 rounded-xl text-xs font-medium">
+            {shareFeedback}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 1. INFORMATIONS GENERALES */}
           <section className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 mb-4">En-tête &amp; Informations Générales</h2>
+            <h2 className="text-base font-bold text-slate-900 mb-4">1. En-tête &amp; Informations Générales</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Nom de la Station d'Épuration (STEP) <span className="text-rose-500">*</span>
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nom de la STEP *</label>
                 <input
                   type="text"
                   value={formData.nomStep}
                   onChange={(e) => handleChange('nomStep', e.target.value)}
                   placeholder="ex: STEP Goderville"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50/50 focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Date de l'Autosurveillance <span className="text-rose-500">*</span>
-                </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Date *</label>
                 <input
                   type="date"
                   value={formData.dateAutosurveillance}
                   onChange={(e) => handleChange('dateAutosurveillance', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-slate-50/50 focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
                 />
               </div>
-            </div>
-          </section>
-
-          <button
-            type="submit"
-            className="w-full py-4 bg-sky-600 hover:bg-sky-500 text-white font-extrabold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Download className="w-5 h-5" />
-            <span>Générer et Télécharger le Rapport PDF Officiel</span>
-          </button>
-        </form>
-      </main>
-
-      {showPdfModal && generatedPdf && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
-          <div className="bg-white w-full max-w-4xl h-[92vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-            <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
-              <h3 className="font-bold">Aperçu du Rapport PDF</h3>
-              <button onClick={() => setShowPdfModal(false)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-100 p-2">
-              <iframe src={generatedPdf.blobUrl} className="w-full h-full rounded-xl border bg-white" title="PDF" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEmailModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b">
-              <h3 className="font-extrabold text-slate-900">Transmission par E-mail</h3>
-              <button onClick={() => setShowEmailModal(false)} className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-xs text-slate-600">Le rapport PDF officiel va être transmis via votre client de messagerie.</p>
-            <button
-              type="button"
-              disabled={emailSending}
-              onClick={handleSendEmailDirect}
-              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {emailSending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              <span>Ouvrir l'application de messagerie</span>
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Technicien</label>
+                <input
+                  type="text"
+                  value={formData.technicienNom}
+                  onChange={(e) => handleChange('technicienNom', e.target.value)}
+                  placeholder="ex: Laurent JUILLIEN"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-slate-50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Météo</label>
+                <select
+                  value={formData.
