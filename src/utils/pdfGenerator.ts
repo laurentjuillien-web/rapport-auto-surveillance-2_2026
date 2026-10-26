@@ -214,4 +214,356 @@ export async function generateAutosurveillancePdf(
     if (r.sub) {
       doc.setFontSize(5.8);
       doc.setTextColor(lightMuted[0], lightMuted[1], lightMuted[2]);
-      doc.text(r.sub, colEntreeX + colWidth - 4, rY + 2
+      doc.text(r.sub, colEntreeX + colWidth - 4, rY + 2.8, { align: 'right' });
+    }
+    rY += 7.2;
+  });
+
+  // -- SORTIE BLOCK --
+  doc.setFillColor(236, 253, 245);
+  doc.setDrawColor(167, 243, 208);
+  doc.roundedRect(colSortieX, curY, colWidth, blockHeight, 1.5, 1.5, 'FD');
+
+  doc.setFillColor(sortieColor[0], sortieColor[1], sortieColor[2]);
+  doc.roundedRect(colSortieX, curY, colWidth, 6, 1.5, 1.5, 'F');
+  doc.rect(colSortieX, curY + 2.5, colWidth, 3.5, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text("POINT DE MESURE : SORTIE (Rejet Traité)", colSortieX + 4, curY + 4.2);
+
+  const sortieRows = [
+    { label: "Date & heure relève", val: `${data.sortieDate} à ${data.sortieHeure}` },
+    { 
+      label: data.presencePreleveur ? "Température préleveur" : "Température eau prélevée", 
+      val: `${data.sortieTemperature} °C`,
+      sub: data.presencePreleveur
+        ? (parseFloat(data.sortieTemperature) >= 2 && parseFloat(data.sortieTemperature) <= 5 ? "Conforme [2-5°C]" : "Hors cible [2-5°C]")
+        : "Mesure directe eau prélevée"
+    },
+    { 
+      label: data.sortieHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", 
+      val: `${data.sortieDebit ? data.sortieDebit : '-'} m³`, 
+      highlight: true 
+    },
+  ];
+
+  rY = curY + 10.5;
+  sortieRows.forEach((r) => {
+    doc.setTextColor(lightMuted[0], lightMuted[1], lightMuted[2]);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text(r.label, colSortieX + 4, rY);
+
+    doc.setTextColor(r.highlight ? sortieColor[0] : textColor[0], r.highlight ? sortieColor[1] : textColor[1], r.highlight ? sortieColor[2] : textColor[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(r.highlight ? 9 : 7.5);
+    doc.text(r.val, colSortieX + colWidth - 4, rY, { align: 'right' });
+
+    if (r.sub) {
+      doc.setFontSize(5.8);
+      doc.setTextColor(lightMuted[0], lightMuted[1], lightMuted[2]);
+      doc.text(r.sub, colSortieX + colWidth - 4, rY + 2.8, { align: 'right' });
+    }
+    rY += 7.2;
+  });
+
+  curY += blockHeight + 3.5;
+
+  // 4. SECTION D'ANALYSE SPÉCIFIQUE : ÉQUIPEMENTS & PARAMÈTRES D'EXPLOITATION
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(203, 213, 225);
+  const equipBlockHeight = 28;
+  doc.roundedRect(margin, curY, contentWidth, equipBlockHeight, 1.5, 1.5, 'FD');
+
+  // Titre du bloc équipements
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.roundedRect(margin, curY, contentWidth, 5.5, 1.5, 1.5, 'F');
+  doc.rect(margin, curY + 2.5, contentWidth, 3, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text("ANALYSE DES ÉQUIPEMENTS D'EXPLOITATION : DÉBITMÈTRES & PRÉLEVEURS", margin + 4, curY + 3.8);
+
+  // Colonne Gauche : Débitmètres
+  const subColW = (contentWidth - 6) / 2;
+  const leftX = margin + 3;
+  const rightX = margin + subColW + 6;
+  let eqY = curY + 9.5;
+
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text("1. Mode de mesure des Débits :", leftX, eqY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+  // Entrée
+  const txtEntreeDeb = data.entreeHasDebimetre
+    ? `• Entrée : Débitmètre [OUI] - Débit cumulé = ${data.entreeDebit || '-'} m3`
+    : `• Entrée : Débitmètre [NON] - Estimé = ${data.entreeDebit || '-'} m3 (${data.entreeTempsMarchePompes || '-'}h @ ${data.entreeDebitPompeNominal || '-'} m3/h)`;
+  doc.text(txtEntreeDeb, leftX + 2, eqY + 5);
+
+  // Sortie
+  const txtSortieDeb = data.sortieHasDebimetre
+    ? `• Sortie : Débitmètre [OUI] - Débit cumulé = ${data.sortieDebit || '-'} m3`
+    : `• Sortie : Débitmètre [NON] - Estimé = ${data.sortieDebit || '-'} m3 (${data.sortieTempsMarchePompes || '-'}h @ ${data.sortieDebitPompeNominal || '-'} m3/h)`;
+  doc.text(txtSortieDeb, leftX + 2, eqY + 10);
+
+  // Colonne Droite : Préleveurs
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text("2. Équipements Préleveurs 24h :", rightX, eqY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+  if (data.presencePreleveur) {
+    doc.text(`• Présence de préleveur(s) : OUI`, rightX + 2, eqY + 5);
+    const freqTxt = data.preleveurAsservissement === 'débit'
+      ? `Tous les ${data.preleveurFrequenceDebit || '-'} m3`
+      : `Toutes les ${data.preleveurFrequenceTemps || '-'} minutes`;
+    doc.text(`• Type : ${data.preleveurType || 'Non précisé'} | Asservissement : ${data.preleveurAsservissement || 'débit'}`, rightX + 2, eqY + 9.5);
+    doc.text(`• Fréquence : ${freqTxt}`, rightX + 2, eqY + 14);
+  } else {
+    doc.text(`• Présence de préleveur(s) : NON`, rightX + 2, eqY + 5);
+    doc.text(`• Mode de collecte : Échantillonnage manuel`, rightX + 2, eqY + 10);
+  }
+
+  curY += equipBlockHeight + 3;
+
+  // 5. BILAN VOLUMÉTRIQUE / SYNTHÈSE HYDRAULIQUE
+  const qIn = parseFloat(data.entreeDebit);
+  const qOut = parseFloat(data.sortieDebit);
+  let bilanText = "Calcul volumétrique 24h : ";
+  if (!isNaN(qIn) && !isNaN(qOut) && qIn > 0) {
+    const diff = qOut - qIn;
+    const ratio = ((qOut / qIn) * 100).toFixed(1);
+    bilanText += `Ratio Débit Sortie / Entrée = ${ratio}% (Écart hydraulique : ${diff > 0 ? '+' : ''}${diff.toFixed(1)} m³) — Données cohérentes pour le bilan d'autosurveillance.`;
+  } else {
+    bilanText += "Enregistrements volumétriques continus 24 heures conformes aux prescriptions réglementaires.";
+  }
+
+  doc.setFillColor(241, 245, 249);
+  doc.setDrawColor(203, 213, 225);
+  doc.roundedRect(margin, curY, contentWidth, 7, 1.5, 1.5, 'FD');
+
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text(bilanText, margin + 4, curY + 4.6);
+
+  curY += 10;
+
+  // 6. PHOTOGRAPHIES DE TERRAIN HORODATÉES
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("JUSTIFICATIFS PHOTOGRAPHIQUES OFFICIELS DES PRÉLÈVEMENTS", margin, curY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(lightMuted[0], lightMuted[1], lightMuted[2]);
+  doc.text("Photographies géolocalisées et horodatées intégrées au rapport", margin + 105, curY);
+
+  curY += 3;
+
+  const photoWidth = (contentWidth - 6) / 2; // 90mm
+  const photoHeight = 74; // Hauteur équilibrée pour une mise en page A4 parfaite
+
+  // --- CADRE PHOTO ENTRÉE ---
+  doc.setDrawColor(186, 230, 253);
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(colEntreeX, curY, photoWidth, photoHeight, 1.5, 1.5, 'FD');
+
+  doc.setFillColor(entreeColor[0], entreeColor[1], entreeColor[2]);
+  doc.roundedRect(colEntreeX, curY, photoWidth, 5.5, 1.5, 1.5, 'F');
+  doc.rect(colEntreeX, curY + 2.5, photoWidth, 3, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text("PHOTO : PRÉLEVEUR ENTRÉE (Eaux Brutes)", colEntreeX + 4, curY + 3.8);
+
+  const imgAreaX = colEntreeX + 2;
+  const imgAreaY = curY + 7;
+  const maxImgW = photoWidth - 4;
+  const maxImgH = photoHeight - 13.5;
+
+  if (entreeImgPrepared) {
+    try {
+      const { canvas, aspectRatio } = entreeImgPrepared;
+      let renderW = maxImgW;
+      let renderH = renderW / aspectRatio;
+
+      if (renderH > maxImgH) {
+        renderH = maxImgH;
+        renderW = renderH * aspectRatio;
+      }
+
+      const posX = imgAreaX + (maxImgW - renderW) / 2;
+      const posY = imgAreaY + (maxImgH - renderH) / 2;
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(241, 245, 249);
+      doc.rect(imgAreaX, imgAreaY, maxImgW, maxImgH, 'F');
+
+      doc.addImage(canvas, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
+      doc.setDrawColor(203, 213, 225);
+      doc.rect(posX, posY, renderW, renderH, 'D');
+
+      doc.setFillColor(248, 250, 252);
+      doc.rect(colEntreeX + 1, curY + photoHeight - 5.5, photoWidth - 2, 4.8, 'F');
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.text(`Prise le ${data.entreeDate} à ${data.entreeHeure} • T: ${data.entreeTemperature}°C • Q: ${data.entreeDebit || '-'} m³`, colEntreeX + 3, curY + photoHeight - 2);
+
+    } catch (err) {
+      console.warn("Erreur insertion photo entrée dans le PDF", err);
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(7);
+      doc.text("Photo non disponible", colEntreeX + 20, curY + 35);
+    }
+  } else {
+    doc.setTextColor(160, 174, 192);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.text("Aucune photo capturée", colEntreeX + photoWidth / 2, curY + 35, { align: 'center' });
+  }
+
+  // --- CADRE PHOTO SORTIE ---
+  doc.setDrawColor(167, 243, 208);
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(colSortieX, curY, photoWidth, photoHeight, 1.5, 1.5, 'FD');
+
+  doc.setFillColor(sortieColor[0], sortieColor[1], sortieColor[2]);
+  doc.roundedRect(colSortieX, curY, photoWidth, 5.5, 1.5, 1.5, 'F');
+  doc.rect(colSortieX, curY + 2.5, photoWidth, 3, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text("PHOTO : PRÉLEVEUR SORTIE (Rejet Traité)", colSortieX + 4, curY + 3.8);
+
+  const imgAreaSortieX = colSortieX + 2;
+  const imgAreaSortieY = curY + 7;
+
+  if (sortieImgPrepared) {
+    try {
+      const { canvas, aspectRatio } = sortieImgPrepared;
+      let renderW = maxImgW;
+      let renderH = renderW / aspectRatio;
+
+      if (renderH > maxImgH) {
+        renderH = maxImgH;
+        renderW = renderH * aspectRatio;
+      }
+
+      const posX = imgAreaSortieX + (maxImgW - renderW) / 2;
+      const posY = imgAreaSortieY + (maxImgH - renderH) / 2;
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(241, 245, 249);
+      doc.rect(imgAreaSortieX, imgAreaSortieY, maxImgW, maxImgH, 'F');
+
+      doc.addImage(canvas, 'JPEG', posX, posY, renderW, renderH, undefined, 'FAST');
+      doc.setDrawColor(203, 213, 225);
+      doc.rect(posX, posY, renderW, renderH, 'D');
+
+      doc.setFillColor(248, 250, 252);
+      doc.rect(colSortieX + 1, curY + photoHeight - 5.5, photoWidth - 2, 4.8, 'F');
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.text(`Prise le ${data.sortieDate} à ${data.sortieHeure} • T: ${data.sortieTemperature}°C • Q: ${data.sortieDebit || '-'} m³`, colSortieX + 3, curY + photoHeight - 2);
+
+    } catch (err) {
+      console.warn("Erreur insertion photo sortie dans le PDF", err);
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(7);
+      doc.text("Photo non disponible", colSortieX + 20, curY + 35);
+    }
+  } else {
+    doc.setTextColor(160, 174, 192);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.text("Aucune photo capturée", colSortieX + photoWidth / 2, curY + 35, { align: 'center' });
+  }
+
+  curY += photoHeight + 3.5;
+
+  // 7. OBSERVATIONS / REMARQUES TERRAIN
+  if (data.observations && data.observations.trim()) {
+    doc.setFillColor(254, 252, 232);
+    doc.setDrawColor(254, 240, 138);
+    doc.roundedRect(margin, curY, contentWidth, 12, 1.5, 1.5, 'FD');
+
+    doc.setTextColor(146, 64, 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text("Remarques / Observations d'exploitation :", margin + 3, curY + 4);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(50, 50, 50);
+    const splitObs = doc.splitTextToSize(data.observations, contentWidth - 8);
+    doc.text(splitObs.slice(0, 2), margin + 3, curY + 8);
+  }
+
+  // 8. PIED DE PAGE OFFICIEL AVEC MENTION OBLIGATOIRE
+  const footerY = pageHeight - 11;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(margin, footerY - 2.5, pageWidth - margin, footerY - 2.5);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(lightMuted[0], lightMuted[1], lightMuted[2]);
+  doc.text("Transmission réglementaire : Bilan d'autosurveillance STEP 24h avec débitmètres et préleveurs asservis", margin, footerY);
+  doc.text("Fiche d'intervention terrain certifiée conforme — Prélèvements 24 heures et photographies certifiées", margin, footerY + 3.5);
+
+  // Mention d'auteur exigée
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("Créé par Laurent Juillien avec l'assistance de l'IA", pageWidth - margin, footerY + 1.5, { align: 'right' });
+
+  // Génération des sorties
+  const blob = doc.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+  const dataUri = doc.output('datauristring');
+  const base64 = dataUri.includes(',') ? dataUri.split(',')[1] : dataUri;
+
+  const cleanStepName = (data.nomStep || 'STEP').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+  const cleanDate = (data.dateAutosurveillance || new Date().toISOString().split('T')[0]).replace(/-/g, '');
+  const fileName = `Bilan_Autosurveillance_${cleanStepName}_${cleanDate}.pdf`;
+
+  return {
+    doc,
+    blob,
+    blobUrl,
+    base64,
+    dataUri,
+    fileName,
+  };
+}
+
+/**
+ * Déclenche le téléchargement direct du fichier PDF généré
+ */
+export function downloadPdfBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
