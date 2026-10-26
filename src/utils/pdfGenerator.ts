@@ -194,7 +194,7 @@ export async function generateAutosurveillancePdf(
     },
     { 
       label: data.entreeHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", 
-      val: `${data.entreeDebit ? Number(data.entreeDebit).toLocaleString('fr-FR') : '-'} m³`, 
+      val: `${data.entreeDebit ? data.entreeDebit : '-'} m³`, 
       highlight: true 
     },
   ];
@@ -244,7 +244,7 @@ export async function generateAutosurveillancePdf(
     },
     { 
       label: data.sortieHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", 
-      val: `${data.sortieDebit ? Number(data.sortieDebit).toLocaleString('fr-FR') : '-'} m³`, 
+      val: `${data.sortieDebit ? data.sortieDebit : '-'} m³`, 
       highlight: true 
     },
   ];
@@ -304,14 +304,14 @@ export async function generateAutosurveillancePdf(
 
   // Entrée
   const txtEntreeDeb = data.entreeHasDebimetre
-    ? `• Entrée : Débitmètre [OUI] → Débit cumulé 24h = ${Number(data.entreeDebit).toLocaleString('fr-FR')} m³`
-    : `• Entrée : Débitmètre [NON] → Estimé = ${Number(data.entreeDebit).toLocaleString('fr-FR')} m³ (Pompes : ${data.entreeTempsMarchePompes || '-'}h @ ${data.entreeDebitPompeNominal || '-'} m³/h)`;
+    ? `• Entrée : Débitmètre [OUI] → Débit cumulé 24h = ${data.entreeDebit || '-'} m³`
+    : `• Entrée : Débitmètre [NON] → Estimé = ${data.entreeDebit || '-'} m³ (Pompes : ${data.entreeTempsMarchePompes || '-'}h @ ${data.entreeDebitPompeNominal || '-'} m³/h)`;
   doc.text(txtEntreeDeb, leftX + 2, eqY + 4.5);
 
   // Sortie
   const txtSortieDeb = data.sortieHasDebimetre
-    ? `• Sortie : Débitmètre [OUI] → Débit cumulé 24h = ${Number(data.sortieDebit).toLocaleString('fr-FR')} m³`
-    : `• Sortie : Débitmètre [NON] → Estimé = ${Number(data.sortieDebit).toLocaleString('fr-FR')} m³ (Pompes : ${data.sortieTempsMarchePompes || '-'}h @ ${data.sortieDebitPompeNominal || '-'} m³/h)`;
+    ? `• Sortie : Débitmètre [OUI] → Débit cumulé 24h = ${data.sortieDebit || '-'} m³`
+    : `• Sortie : Débitmètre [NON] → Estimé = ${data.sortieDebit || '-'} m³ (Pompes : ${data.sortieTempsMarchePompes || '-'}h @ ${data.sortieDebitPompeNominal || '-'} m³/h)`;
   doc.text(txtSortieDeb, leftX + 2, eqY + 9);
 
   // Colonne Droite : Préleveurs
@@ -423,7 +423,7 @@ export async function generateAutosurveillancePdf(
       doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(6);
-      doc.text(`Prise le ${data.entreeDate} à ${data.entreeHeure} • T: ${data.entreeTemperature}°C • Q: ${data.entreeDebit} m³`, colEntreeX + 3, curY + photoHeight - 2);
+      doc.text(`Prise le ${data.entreeDate} à ${data.entreeHeure} • T: ${data.entreeTemperature}°C • Q: ${data.entreeDebit || '-'} m³`, colEntreeX + 3, curY + photoHeight - 2);
 
     } catch (err) {
       console.warn("Erreur insertion photo entrée dans le PDF", err);
@@ -482,7 +482,7 @@ export async function generateAutosurveillancePdf(
       doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(6);
-      doc.text(`Prise le ${data.sortieDate} à ${data.sortieHeure} • T: ${data.sortieTemperature}°C • Q: ${data.sortieDebit} m³`, colSortieX + 3, curY + photoHeight - 2);
+      doc.text(`Prise le ${data.sortieDate} à ${data.sortieHeure} • T: ${data.sortieTemperature}°C • Q: ${data.sortieDebit || '-'} m³`, colSortieX + 3, curY + photoHeight - 2);
 
     } catch (err) {
       console.warn("Erreur insertion photo sortie dans le PDF", err);
