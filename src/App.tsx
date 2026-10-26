@@ -380,4 +380,16 @@ export default function App() {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={handleShareWhatsApp
+                onClick={handleShareWhatsApp}
+                className="px-3.5 py-2.5 bg-[#25D366] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
