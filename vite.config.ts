@@ -1,20 +1,8 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-export default defineConfig(() => {
-  return {
-    plugins: [react(), tailwindcss()],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
-    },
-    server: {
-      // HMR is disabled in AI Studio preview iframe to prevent WebSocket connection failures
-      hmr: false,
-      watch: null,
-    },
-  };
-});
+// https://vite.dev/config/
+export default defineConfig({
+  base: '/rapport-auto-surveillance-2_2026/',
+  plugins: [react()],
+})
