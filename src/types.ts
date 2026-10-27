@@ -34,9 +34,6 @@ export interface AutosurveillanceData {
   entreeTemperature: string; // en °C
   entreePhoto: string | null; // Base64 data URL
   entreePhotoNom?: string;
-  entreePhotoGps?: string; // ex: "47.38921° N, 0.68942° E (±3m)"
-  entreePhotoGpsLat?: number;
-  entreePhotoGpsLng?: number;
 
   // Bilan Sortie
   sortieDate: string;
@@ -44,13 +41,9 @@ export interface AutosurveillanceData {
   sortieTemperature: string; // en °C
   sortiePhoto: string | null; // Base64 data URL
   sortiePhotoNom?: string;
-  sortiePhotoGps?: string; // ex: "47.38954° N, 0.68991° E (±4m)"
-  sortiePhotoGpsLat?: number;
-  sortiePhotoGpsLng?: number;
 
   // Contact & Transmission
   destinataireEmail?: string;
-  destinataireTelephone?: string;
 }
 
 export interface ValidationErrors {
