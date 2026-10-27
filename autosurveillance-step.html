@@ -55,13 +55,12 @@
         <button
           type="button"
           id="btnResetForm"
-          class="text-xs text-rose-300 hover:text-rose-100 bg-rose-950/60 hover:bg-rose-900/80 px-2.5 py-1.5 rounded-lg border border-rose-800/80 transition cursor-pointer flex items-center gap-1.5"
-          title="Effacer toutes les valeurs du formulaire"
+          class="text-xs text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+          title="Réinitialiser le formulaire"
         >
-          <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
-          <span class="hidden sm:inline font-medium">Tout effacer</span>
         </button>
       </div>
     </div>
@@ -104,7 +103,7 @@
           <!-- Date de l'autosurveillance -->
           <div>
             <label for="dateAutosurveillance" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Date de l'Autosurveillance <span class="text-rose-500">*</span> <span class="text-slate-400 text-[11px] font-normal">(jj/mm/aaaa)</span>
+              Date de l'Autosurveillance <span class="text-rose-500">*</span>
             </label>
             <input
               type="date"
@@ -175,7 +174,7 @@
                 <!-- Date prélèvement -->
                 <div>
                   <label for="entreeDate" class="block text-xs font-semibold text-slate-700 mb-1">
-                    Date prélèvement <span class="text-rose-500">*</span> <span class="text-slate-400 text-[10px] font-normal font-mono">(jj/mm/aaaa)</span>
+                    Date prélèvement <span class="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -346,14 +345,6 @@
                     </div>
                   </div>
                 </div>
-                <!-- Coordonnées GPS Photo Entrée -->
-                <div id="entreeGpsBox" class="hidden mt-2 p-2.5 rounded-xl bg-sky-50/80 border border-sky-200 text-xs space-y-1">
-                  <div class="flex items-center justify-between text-[11px] font-bold text-sky-950">
-                    <span class="flex items-center gap-1">📍 Coordonnées GPS Photo</span>
-                    <button type="button" id="btnRefreshEntreeGps" class="text-sky-600 hover:text-sky-800 text-[10px] font-semibold cursor-pointer">Actualiser GPS</button>
-                  </div>
-                  <input type="text" id="entreePhotoGps" placeholder="ex: 47.38921° N, 0.68942° E" class="w-full px-2.5 py-1 text-xs font-mono rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-sky-500">
-                </div>
                 <p id="err-entreePhoto" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
               </div>
 
@@ -384,7 +375,7 @@
                 <!-- Date prélèvement -->
                 <div>
                   <label for="sortieDate" class="block text-xs font-semibold text-slate-700 mb-1">
-                    Date prélèvement <span class="text-rose-500">*</span> <span class="text-slate-400 text-[10px] font-normal font-mono">(jj/mm/aaaa)</span>
+                    Date prélèvement <span class="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -555,15 +546,6 @@
                     </div>
                   </div>
                 </div>
-                <!-- Coordonnées GPS Photo Sortie (Format Degrés Décimaux) -->
-                <div id="sortieGpsBox" class="mt-2.5 p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs space-y-1.5">
-                  <div class="flex items-center justify-between text-[11px] font-bold text-emerald-950">
-                    <span class="flex items-center gap-1">📍 Coordonnées GPS Photo <span class="text-[10px] font-normal text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">Degrés Décimaux</span></span>
-                    <button type="button" id="btnRefreshSortieGps" class="px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold cursor-pointer transition shadow-xs">Actualiser le GPS</button>
-                  </div>
-                  <input type="text" id="sortiePhotoGps" placeholder="ex: 47.389542, 0.689914" class="w-full px-2.5 py-1 text-xs font-mono font-bold rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                  <p class="text-[10px] text-slate-500">Degrés Décimaux (ex: 47.389542, 0.689914). Inclus sur le rapport officiel.</p>
-                </div>
                 <p id="err-sortiePhoto" class="text-xs text-rose-500 font-medium mt-1 hidden"></p>
               </div>
 
@@ -733,27 +715,73 @@
         </div>
       </div>
 
-      <!-- 4. VALIDATION ET OPTIONS DE PARTAGE DIRECT WHATSAPP, EMAIL, SMS, MESSENGER -->
-      <section class="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-700">
+      <!-- 4. VALIDATION ET OPTIONS DE PARTAGE DIRECT WHATSAPP & EMAIL -->
+      <section class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-700">
         <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-700">
           <div class="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
             4
           </div>
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <span>Génération &amp; Partage du Rapport</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-semibold">
-                Officiel 24h
-              </span>
-            </h2>
+            <h2 class="text-base sm:text-lg font-bold text-white">Génération du Rapport PDF &amp; Envoi</h2>
             <p class="text-xs text-slate-300">
-              Génération instantanée du rapport officiel certifié avec photos et partage direct par Mail, WhatsApp, SMS ou Messenger.
+              Le rapport PDF complet avec photos est généré et joint obligatoirement à l'envoi par e-mail et WhatsApp
             </p>
           </div>
         </div>
 
         <div class="space-y-4">
+          <!-- Carte explicative des options de transmission -->
+          <div class="p-4 rounded-xl bg-slate-800/90 border border-slate-700 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-700/60">
+                <div class="w-9 h-9 rounded-lg bg-[#25D366]/20 text-[#25D366] flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82-1.55 1.56-3.62 2.42-5.82 2.42-1.48 0-2.93-.39-4.21-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.83-1.32-1.27-2.86-1.27-4.38 0-4.54 3.7-8.24 8.24-8.24zm-3.62 4.75c-.2 0-.44.08-.66.32-.22.24-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.7 2.6 4.13 3.65.58.25 1.03.4 1.38.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.19-.71-.63-1.19-1.41-1.33-1.65-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.48-.39-.41-.54-.42h-.47z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>Partage WhatsApp</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-semibold">Fichier PDF joint</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                    Partage direct du fichier PDF via Web Share ou téléchargement direct avec synthèse wa.me.
+                  </p>
+                </div>
+              </div>
 
+              <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-700/60">
+                <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>Transmission E-mail</span>
+                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-400 border border-sky-800 font-semibold">PDF joint</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                    Rapport officiel joint en pièce jointe PDF avec synthèse complète et destinataire pré-rempli.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Champ adresse email optionnelle -->
+            <div class="pt-1">
+              <label for="destinataireEmail" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Adresse e-mail du destinataire <span class="text-slate-400 font-normal lowercase">(optionnel)</span></span>
+                <span class="text-[10px] text-slate-400">ex: exploitation, régie, agence de l'eau</span>
+              </label>
+              <input
+                type="email"
+                id="destinataireEmail"
+                placeholder="ex: exploitation@grand-bassin.fr"
+                class="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-700 bg-slate-900/80 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+              />
+            </div>
+          </div>
 
           <!-- Alertes globales d'erreurs -->
           <div id="validationBanner" class="hidden p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/50 text-rose-200 text-xs">
@@ -766,55 +794,64 @@
             <ul id="validationList" class="list-disc list-inside space-y-0.5 text-rose-300 pl-1"></ul>
           </div>
 
-          <!-- UN SEUL BOUTON PRINCIPAL POUR PARTAGER -->
-          <div class="pt-1">
+          <!-- Bouton principal de génération -->
+          <div class="pt-2">
             <button
               type="submit"
               id="btnSubmit"
-              class="w-full py-4 px-6 rounded-2xl font-extrabold text-base sm:text-lg bg-gradient-to-r from-emerald-500 via-teal-600 to-sky-600 hover:from-emerald-400 hover:to-sky-500 active:scale-[0.99] text-white shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-3 transition cursor-pointer"
+              class="w-full py-4 px-6 rounded-xl font-extrabold text-base sm:text-lg bg-gradient-to-r from-emerald-500 via-teal-600 to-sky-600 hover:from-emerald-400 hover:to-sky-500 active:scale-[0.99] text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-3 transition cursor-pointer"
             >
-              <svg id="btnIconSend" class="w-6 h-6 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+              <svg id="btnIconSend" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
               <svg id="btnSpinner" class="w-6 h-6 animate-spin hidden text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span id="btnText">Partager le Rapport (PDF inclus)</span>
+              <span id="btnText">Générer le Rapport PDF (Prêt pour WhatsApp &amp; Mail)</span>
             </button>
-            <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs text-slate-300 mt-2.5 font-medium">
-              <span class="text-slate-400">Canaux au choix après clic :</span>
-              <span class="text-sky-300 font-semibold">✉️ Mail</span>
+            <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400 mt-2.5">
+              <span class="text-[#25D366] font-medium">✓ Partage WhatsApp avec PDF</span>
               <span>•</span>
-              <span class="text-[#25D366] font-semibold">💬 WhatsApp</span>
+              <span class="text-sky-300">✓ Envoi e-mail avec PDF joint</span>
               <span>•</span>
-              <span class="text-indigo-300 font-semibold">📱 SMS</span>
-              <span>•</span>
-              <span class="text-cyan-300 font-semibold">⚡ Messenger</span>
+              <span class="text-slate-300">✓ Téléchargement direct</span>
             </div>
           </div>
 
-          <!-- Si rapport déjà généré, lien discret pour aperçu ou téléchargement direct -->
-          <div id="section4SharePanel" class="hidden p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span class="text-emerald-400 font-semibold flex items-center gap-1.5">
-              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              <span>Dernier PDF généré : <strong id="section4FileName" class="font-mono text-slate-200"></strong></span>
-            </span>
-            <div class="flex items-center gap-2">
+          <!-- Panneau d'actions directes WhatsApp / Email / Téléchargement dans la Section 4 -->
+          <div id="section4SharePanel" class="hidden p-3.5 rounded-xl bg-slate-900 border border-emerald-500/60 space-y-2.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>Rapport PDF prêt pour l'envoi :</span>
+              </span>
+              <span id="section4FileName" class="font-mono text-slate-300 truncate max-w-[200px]"></span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
               <button
                 type="button"
-                id="section4BtnPreview"
-                class="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 cursor-pointer"
+                id="section4BtnWhatsApp"
+                class="py-2.5 px-3 bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1caa4f] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-md"
               >
-                <span>Aperçu PDF</span>
+                <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82-1.55 1.56-3.62 2.42-5.82 2.42-1.48 0-2.93-.39-4.21-1.15l-.3-.18-3.12.82.83-3.04-.2-.31c-.83-1.32-1.27-2.86-1.27-4.38 0-4.54 3.7-8.24 8.24-8.24zm-3.62 4.75c-.2 0-.44.08-.66.32-.22.24-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.7 2.6 4.13 3.65.58.25 1.03.4 1.38.51.58.19 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.19-.71-.63-1.19-1.41-1.33-1.65-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.48-.39-.41-.54-.42h-.47z"/></svg>
+                <span>Envoyer WhatsApp</span>
               </button>
-              <span class="text-slate-600">•</span>
+              <button
+                type="button"
+                id="section4BtnEmail"
+                class="py-2.5 px-3 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer shadow-md"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span>Envoyer par Email</span>
+              </button>
               <button
                 type="button"
                 id="section4BtnDownload"
-                class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer"
+                class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition cursor-pointer border border-slate-700 shadow-md"
               >
-                <span>Télécharger</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Télécharger PDF</span>
               </button>
             </div>
           </div>
@@ -1264,53 +1301,6 @@
         }
       });
 
-      // Fonctions utilitaires réglementaires : Formats de Dates et de Débits
-      function formatDateFr(dateStr) {
-        if (!dateStr) return '-';
-        const clean = String(dateStr).trim();
-        const m = clean.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) return clean;
-        const d = new Date(clean);
-        if (!isNaN(d.getTime())) {
-          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-        }
-        return clean;
-      }
-
-      function formatDebit(val) {
-        if (val === undefined || val === null || val === '') return '-';
-        const num = typeof val === 'number' ? val : parseFloat(String(val).replace(',', '.'));
-        if (isNaN(num)) return String(val);
-        return Number.isInteger(num) ? String(num) : String(Math.round(num * 10) / 10);
-      }
-
-      // Géolocalisation instantanée haute précision au format Degrés Décimaux (ex: 47.389214, 0.689421)
-      async function getDeviceGpsPosition() {
-        if (!navigator.geolocation) return null;
-        return new Promise(resolve => {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              const lat = pos.coords.latitude;
-              const lng = pos.coords.longitude;
-              resolve(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-            },
-            () => {
-              navigator.geolocation.getCurrentPosition(
-                pos2 => {
-                  const lat2 = pos2.coords.latitude;
-                  const lng2 = pos2.coords.longitude;
-                  resolve(`${lat2.toFixed(6)}, ${lng2.toFixed(6)}`);
-                },
-                () => resolve(null),
-                { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
-              );
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-          );
-        });
-      }
-
       entreePhotoInput.addEventListener('change', async function() {
         if (!this.files || !this.files[0]) return;
         try {
@@ -1321,27 +1311,8 @@
           entreePlaceholder.classList.add('hidden');
           entreePreviewContainer.classList.remove('hidden');
           clearError('entreePhoto');
-
-          // Géolocalisation GPS automatique
-          entreeGpsBox.classList.remove('hidden');
-          const gps = await getDeviceGpsPosition();
-          if (gps) {
-            entreePhotoGps.value = gps;
-          }
         } catch (err) {
           alert("Erreur lors de la lecture de la photo : " + err.message);
-        }
-      });
-
-      btnRefreshEntreeGps.addEventListener('click', async function(e) {
-        e.stopPropagation();
-        btnRefreshEntreeGps.textContent = "Localisation...";
-        const gps = await getDeviceGpsPosition();
-        btnRefreshEntreeGps.textContent = "Actualiser GPS";
-        if (gps) {
-          entreePhotoGps.value = gps;
-        } else {
-          alert("Position GPS non disponible. Vérifiez les autorisations de géolocalisation de votre appareil.");
         }
       });
 
@@ -1352,8 +1323,6 @@
         entreePreviewImg.src = '';
         entreePreviewContainer.classList.add('hidden');
         entreePlaceholder.classList.remove('hidden');
-        entreePhotoGps.value = '';
-        entreeGpsBox.classList.add('hidden');
       });
 
       btnChangeEntreePhoto.addEventListener('click', function(e) {
@@ -1378,27 +1347,8 @@
           sortiePlaceholder.classList.add('hidden');
           sortiePreviewContainer.classList.remove('hidden');
           clearError('sortiePhoto');
-
-          // Géolocalisation GPS automatique
-          sortieGpsBox.classList.remove('hidden');
-          const gps = await getDeviceGpsPosition();
-          if (gps) {
-            sortiePhotoGps.value = gps;
-          }
         } catch (err) {
           alert("Erreur lors de la lecture de la photo : " + err.message);
-        }
-      });
-
-      btnRefreshSortieGps.addEventListener('click', async function(e) {
-        e.stopPropagation();
-        btnRefreshSortieGps.textContent = "Localisation...";
-        const gps = await getDeviceGpsPosition();
-        btnRefreshSortieGps.textContent = "Actualiser GPS";
-        if (gps) {
-          sortiePhotoGps.value = gps;
-        } else {
-          alert("Position GPS non disponible. Vérifiez les autorisations de géolocalisation de votre appareil.");
         }
       });
 
@@ -1409,8 +1359,6 @@
         sortiePreviewImg.src = '';
         sortiePreviewContainer.classList.add('hidden');
         sortiePlaceholder.classList.remove('hidden');
-        sortiePhotoGps.value = '';
-        sortieGpsBox.classList.add('hidden');
       });
 
       btnChangeSortiePhoto.addEventListener('click', function(e) {
@@ -1646,7 +1594,7 @@
         doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
         doc.text("Date du bilan :", margin + 4, curY + 10.5);
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-        doc.text(formatDateFr(dateAutosurveillance.value), margin + 25, curY + 10.5);
+        doc.text(dateAutosurveillance.value ? new Date(dateAutosurveillance.value + 'T00:00:00').toLocaleDateString('fr-FR') : '-', margin + 25, curY + 10.5);
 
         if (technicienNom.value) {
           doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
@@ -1688,9 +1636,9 @@
         doc.text("POINT DE MESURE : ENTRÉE (Eaux Brutes)", colEntreeX + 4, curY + 4.2);
 
         const eRows = [
-          { label: "Date & heure relève", val: `${formatDateFr(entreeDate.value)} à ${entreeHeure.value}` },
+          { label: "Date & heure relève", val: `${entreeDate.value} à ${entreeHeure.value}` },
           { label: state.presencePreleveur ? "Température préleveur" : "Température eau prélevée", val: `${entreeTemperature.value} °C` },
-          { label: state.entreeHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", val: `${formatDebit(entreeDebit.value)} m³`, hl: true }
+          { label: state.entreeHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", val: `${entreeDebit.value ? Number(entreeDebit.value).toLocaleString('fr-FR') : '-'} m³`, hl: true }
         ];
 
         let rY = curY + 10.5;
@@ -1720,9 +1668,9 @@
         doc.text("POINT DE MESURE : SORTIE (Rejet Traité)", colSortieX + 4, curY + 4.2);
 
         const sRows = [
-          { label: "Date & heure relève", val: `${formatDateFr(sortieDate.value)} à ${sortieHeure.value}` },
+          { label: "Date & heure relève", val: `${sortieDate.value} à ${sortieHeure.value}` },
           { label: state.presencePreleveur ? "Température préleveur" : "Température eau prélevée", val: `${sortieTemperature.value} °C` },
-          { label: state.sortieHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", val: `${formatDebit(sortieDebit.value)} m³`, hl: true }
+          { label: state.sortieHasDebimetre ? "Débit mesuré 24h (débitmètre)" : "Débit estimé 24h (pompes)", val: `${sortieDebit.value ? Number(sortieDebit.value).toLocaleString('fr-FR') : '-'} m³`, hl: true }
         ];
 
         rY = curY + 10.5;
@@ -1770,13 +1718,13 @@
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
 
         const txtE = state.entreeHasDebimetre
-          ? `• Entrée : Débitmètre [OUI] : Débit cumulé 24h = ${formatDebit(entreeDebit.value)} m³`
-          : `• Entrée : Débitmètre [NON] : Estimé = ${formatDebit(entreeDebit.value)} m³ (Pompes : ${entreeTempsMarchePompes.value || '-'}h x ${entreeDebitPompeNominal.value || '-'} m³/h)`;
+          ? `• Entrée : Débitmètre [OUI] → Débit cumulé 24h = ${Number(entreeDebit.value).toLocaleString('fr-FR')} m³`
+          : `• Entrée : Débitmètre [NON] → Estimé = ${Number(entreeDebit.value).toLocaleString('fr-FR')} m³ (Pompes : ${entreeTempsMarchePompes.value || '-'}h @ ${entreeDebitPompeNominal.value || '-'} m³/h)`;
         doc.text(txtE, leftX + 2, eqY + 4.5);
 
         const txtS = state.sortieHasDebimetre
-          ? `• Sortie : Débitmètre [OUI] : Débit cumulé 24h = ${formatDebit(sortieDebit.value)} m³`
-          : `• Sortie : Débitmètre [NON] : Estimé = ${formatDebit(sortieDebit.value)} m³ (Pompes : ${sortieTempsMarchePompes.value || '-'}h x ${sortieDebitPompeNominal.value || '-'} m³/h)`;
+          ? `• Sortie : Débitmètre [OUI] → Débit cumulé 24h = ${Number(sortieDebit.value).toLocaleString('fr-FR')} m³`
+          : `• Sortie : Débitmètre [NON] → Estimé = ${Number(sortieDebit.value).toLocaleString('fr-FR')} m³ (Pompes : ${sortieTempsMarchePompes.value || '-'}h @ ${sortieDebitPompeNominal.value || '-'} m³/h)`;
         doc.text(txtS, leftX + 2, eqY + 9);
 
         // Préleveurs
@@ -1850,7 +1798,7 @@
         const imgAreaX = colEntreeX + 2;
         const imgAreaY = curY + 7;
         const maxImgW = photoWidth - 4;
-        const maxImgH = photoHeight - 16;
+        const maxImgH = photoHeight - 13.5;
 
         if (entreeImg) {
           try {
@@ -1869,16 +1817,11 @@
             doc.rect(posX, posY, renderW, renderH, 'D');
 
             doc.setFillColor(248, 250, 252);
-            doc.rect(colEntreeX + 1, curY + photoHeight - 8.5, photoWidth - 2, 7.8, 'F');
+            doc.rect(colEntreeX + 1, curY + photoHeight - 5.5, photoWidth - 2, 4.8, 'F');
             doc.setTextColor(textDark[0], textDark[1], textDark[2]);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6);
-            doc.text(`Prise le ${formatDateFr(entreeDate.value)} à ${entreeHeure.value} • T: ${entreeTemperature.value}°C • Q: ${formatDebit(entreeDebit.value)} m³`, colEntreeX + 3, curY + photoHeight - 4.8);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(5.5);
-            doc.setTextColor(primary[0], primary[1], primary[2]);
-            doc.text(`GPS : ${entreePhotoGps.value || 'Non spécifié'}`, colEntreeX + 3, curY + photoHeight - 1.8);
+            doc.text(`Prise le ${entreeDate.value} à ${entreeHeure.value} • T: ${entreeTemperature.value}°C • Q: ${entreeDebit.value} m³`, colEntreeX + 3, curY + photoHeight - 2);
           } catch(e) {}
         } else {
           doc.setTextColor(160, 174, 192);
@@ -1919,16 +1862,11 @@
             doc.rect(posX, posY, renderW, renderH, 'D');
 
             doc.setFillColor(248, 250, 252);
-            doc.rect(colSortieX + 1, curY + photoHeight - 8.5, photoWidth - 2, 7.8, 'F');
+            doc.rect(colSortieX + 1, curY + photoHeight - 5.5, photoWidth - 2, 4.8, 'F');
             doc.setTextColor(textDark[0], textDark[1], textDark[2]);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(6);
-            doc.text(`Prise le ${formatDateFr(sortieDate.value)} à ${sortieHeure.value} • T: ${sortieTemperature.value}°C • Q: ${formatDebit(sortieDebit.value)} m³`, colSortieX + 3, curY + photoHeight - 4.8);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(5.5);
-            doc.setTextColor(sortieColor[0], sortieColor[1], sortieColor[2]);
-            doc.text(`GPS : ${sortiePhotoGps.value || 'Non spécifié'}`, colSortieX + 3, curY + photoHeight - 1.8);
+            doc.text(`Prise le ${sortieDate.value} à ${sortieHeure.value} • T: ${sortieTemperature.value}°C • Q: ${sortieDebit.value} m³`, colSortieX + 3, curY + photoHeight - 2);
           } catch(e) {}
         } else {
           doc.setTextColor(160, 174, 192);
@@ -2000,36 +1938,34 @@
           '📋 *BILAN D\'AUTOSURVEILLANCE STEP 24H*',
           '--------------------------------------',
           '🏢 *Station* : ' + (nomStep.value || 'Non précisée'),
-          '📅 *Date du bilan* : ' + formatDateFr(dateAutosurveillance.value)
+          '📅 *Date du bilan* : ' + (dateAutosurveillance.value || 'Non précisée')
         ];
         if (technicienNom.value) lines.push('👷 *Technicien* : ' + technicienNom.value);
         if (meteo.value) lines.push('⛅ *Météo* : ' + meteo.value);
 
         lines.push('');
         lines.push('🔹 *ENTRÉE (Eaux Brutes)*');
-        lines.push('  • Relève : ' + (entreeHeure.value || '-') + ' (' + formatDateFr(entreeDate.value) + ')');
+        lines.push('  • Relève : ' + (entreeHeure.value || '-') + ' (' + (entreeDate.value || '-') + ')');
         lines.push('  • ' + (state.presencePreleveur ? 'Température préleveur' : "Température de l'eau prélevée") + ' : ' + (entreeTemperature.value ? entreeTemperature.value + ' °C' : '-'));
         if (state.entreeHasDebimetre) {
-          lines.push('  • Débitmètre : OUI (Débit mesuré 24h : ' + (entreeDebit.value ? formatDebit(entreeDebit.value) + ' m³' : '-') + ')');
+          lines.push('  • Débitmètre : OUI (Débit mesuré 24h : ' + (entreeDebit.value ? Number(entreeDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
         } else {
-          lines.push('  • Débitmètre : NON (Débit estimé : ' + (entreeDebit.value ? formatDebit(entreeDebit.value) + ' m³' : '-') + ')');
-          lines.push('    → Pompes : ' + (entreeTempsMarchePompes.value || '-') + ' h x ' + (entreeDebitPompeNominal.value || '-') + ' m³/h');
+          lines.push('  • Débitmètre : NON (Débit estimé : ' + (entreeDebit.value ? Number(entreeDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
+          lines.push('    → Pompes : ' + (entreeTempsMarchePompes.value || '-') + ' h @ ' + (entreeDebitPompeNominal.value || '-') + ' m³/h');
         }
         lines.push('  • Photo : ' + (state.entreePhoto ? '✓ Capturée' : 'Non jointe'));
-        if (entreePhotoGps.value) lines.push('    📍 GPS : ' + entreePhotoGps.value);
 
         lines.push('');
         lines.push('🔹 *SORTIE (Eaux Traitées / Rejet)*');
-        lines.push('  • Relève : ' + (sortieHeure.value || '-') + ' (' + formatDateFr(sortieDate.value) + ')');
+        lines.push('  • Relève : ' + (sortieHeure.value || '-') + ' (' + (sortieDate.value || '-') + ')');
         lines.push('  • ' + (state.presencePreleveur ? 'Température préleveur' : "Température de l'eau prélevée") + ' : ' + (sortieTemperature.value ? sortieTemperature.value + ' °C' : '-'));
         if (state.sortieHasDebimetre) {
-          lines.push('  • Débitmètre : OUI (Débit mesuré 24h : ' + (sortieDebit.value ? formatDebit(sortieDebit.value) + ' m³' : '-') + ')');
+          lines.push('  • Débitmètre : OUI (Débit mesuré 24h : ' + (sortieDebit.value ? Number(sortieDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
         } else {
-          lines.push('  • Débitmètre : NON (Débit estimé : ' + (sortieDebit.value ? formatDebit(sortieDebit.value) + ' m³' : '-') + ')');
-          lines.push('    → Pompes : ' + (sortieTempsMarchePompes.value || '-') + ' h x ' + (sortieDebitPompeNominal.value || '-') + ' m³/h');
+          lines.push('  • Débitmètre : NON (Débit estimé : ' + (sortieDebit.value ? Number(sortieDebit.value).toLocaleString('fr-FR') + ' m³' : '-') + ')');
+          lines.push('    → Pompes : ' + (sortieTempsMarchePompes.value || '-') + ' h @ ' + (sortieDebitPompeNominal.value || '-') + ' m³/h');
         }
         lines.push('  • Photo : ' + (state.sortiePhoto ? '✓ Capturée' : 'Non jointe'));
-        if (sortiePhotoGps.value) lines.push('    📍 GPS : ' + sortiePhotoGps.value);
 
         lines.push('');
         lines.push('⚙️ *PARAMÈTRES DES PRÉLEVEURS*');
@@ -2066,21 +2002,22 @@
         return lines.join('\n');
       }
 
-      // Envoi WhatsApp avec garantie d'attachement direct du document PDF
+      // Envoi WhatsApp avec garantie du document PDF
       async function triggerWhatsAppShare() {
-        const actualFileName = state.lastFileName || ('Bilan_Autosurveillance_' + (nomStep.value || 'STEP') + '.pdf');
+        const text = generateReportSummary();
         // 1. Déclencher le téléchargement local du PDF si pas encore fait
         if (state.lastBlob) {
-          downloadFile(state.lastBlob, actualFileName);
+          downloadFile(state.lastBlob, state.lastFileName);
         }
 
-        // 2. Partage Web Share direct du fichier PDF sur mobile (SANS text pour éviter que WhatsApp n'ignore le PDF)
+        // 2. Partage Web Share direct du fichier PDF sur mobile
         if (state.lastBlob && navigator.share && navigator.canShare) {
           try {
-            const file = new File([state.lastBlob], actualFileName, { type: 'application/pdf' });
+            const file = new File([state.lastBlob], state.lastFileName || 'Bilan_Autosurveillance.pdf', { type: 'application/pdf' });
             if (navigator.canShare({ files: [file] })) {
               await navigator.share({
-                title: actualFileName,
+                title: 'Bilan Autosurveillance STEP - ' + nomStep.value,
+                text: text,
                 files: [file]
               });
               return;
@@ -2090,28 +2027,27 @@
           }
         }
 
-        // 3. Fallback lien WhatsApp avec avertissement
-        alert("Le document PDF officiel a été téléchargé sur votre appareil (" + actualFileName + "). Dans votre discussion WhatsApp, cliquez sur le trombone 📎 > 'Document' pour joindre le PDF directement.");
-        const shortMsg = "📋 Bilan d'autosurveillance STEP 24h : " + (nomStep.value || 'Station') + "\n📎 Fichier PDF officiel généré : " + actualFileName;
-        const url = 'https://wa.me/?text=' + encodeURIComponent(shortMsg);
+        // 3. Fallback lien WhatsApp
+        const url = 'https://wa.me/?text=' + encodeURIComponent(text);
         window.open(url, '_blank', 'noopener,noreferrer');
       }
 
       // Envoi Email avec garantie du document PDF
       async function triggerEmailSend() {
-        const actualFileName = state.lastFileName || ('Bilan_Autosurveillance_' + (nomStep.value || 'STEP') + '.pdf');
+        const text = generateReportSummary();
         // 1. Télécharger le fichier PDF pour s'assurer qu'il est immédiatement disponible
         if (state.lastBlob) {
-          downloadFile(state.lastBlob, actualFileName);
+          downloadFile(state.lastBlob, state.lastFileName);
         }
 
         // 2. Tenter le partage natif par l'application de messagerie avec le fichier PDF joint
         if (state.lastBlob && navigator.share && navigator.canShare) {
           try {
-            const file = new File([state.lastBlob], actualFileName, { type: 'application/pdf' });
+            const file = new File([state.lastBlob], state.lastFileName || 'Bilan_Autosurveillance.pdf', { type: 'application/pdf' });
             if (navigator.canShare({ files: [file] })) {
               await navigator.share({
-                title: actualFileName,
+                title: '[Autosurveillance STEP] Bilan 24h - ' + (nomStep.value || 'Station'),
+                text: text,
                 files: [file]
               });
               return;
@@ -2122,7 +2058,7 @@
         }
 
         // 3. Fallback mailto:
-        const recipient = '';
+        const recipient = (destinataireEmail ? destinataireEmail.value : '').trim();
         const subject = '[Autosurveillance STEP] Bilan 24h - ' + (nomStep.value || 'STEP') + ' (' + (dateAutosurveillance.value || '') + ')';
         const body = 'Bonjour,\n\nVeuillez trouver ci-dessous le bilan d\'autosurveillance 24h pour la station ' + nomStep.value + '.\nLe document PDF officiel certifié (' + (state.lastFileName || 'rapport.pdf') + ') a été généré et est joint en pièce jointe au format PDF.\n\n' + text + '\n\nCordialement,\n' + (technicienNom.value || 'L\'exploitant de la station');
 
@@ -2238,7 +2174,7 @@
         sortieTempsMarchePompes.value = "17.8";
         sortieDebitPompeNominal.value = "255";
 
-        if (destinataireEmail) destinataireEmail.value = "autosurveillance@grand-bassin.fr";
+        destinataireEmail.value = "autosurveillance@grand-bassin.fr";
 
         // Dessiner des toiles témoins
         function makeSample(title, col) {
@@ -2256,106 +2192,37 @@
         entreePreviewImg.src = state.entreePhoto;
         entreePlaceholder.classList.add('hidden');
         entreePreviewContainer.classList.remove('hidden');
-        entreePhotoGps.value = "47.38921° N, 0.68942° E (±3m)";
-        entreeGpsBox.classList.remove('hidden');
 
         state.sortiePhoto = makeSample("PRELEVEUR REFRIGERE SORTIE", "#059669");
         sortiePreviewImg.src = state.sortiePhoto;
         sortiePlaceholder.classList.add('hidden');
         sortiePreviewContainer.classList.remove('hidden');
-        sortiePhotoGps.value = "47.38954° N, 0.68991° E (±4m)";
-        sortieGpsBox.classList.remove('hidden');
 
         updateVolumetricRatio();
       });
 
-      // Effacement complet et réinitialisation de toutes les valeurs du formulaire
+      // Reset
       btnResetForm.addEventListener('click', function() {
-        // 1. Suppression du cache local
-        try {
-          localStorage.removeItem('step_autosurveillance_draft_v2');
-        } catch (e) {}
-
-        // 2. Remise à zéro de tous les champs de saisie
-        nomStep.value = '';
-        technicienNom.value = '';
-        meteo.value = 'Soleil';
-        observations.value = '';
-
-        dateAutosurveillance.value = '';
-        entreeDate.value = '';
-        sortieDate.value = '';
-        entreeHeure.value = '';
-        sortieHeure.value = '';
-        entreePhotoGps.value = '';
-        sortiePhotoGps.value = '';
-
-        entreeTemperature.value = '';
-        sortieTemperature.value = '';
-
-        entreeDebit.value = '';
-        entreeTempsMarchePompes.value = '';
-        entreeDebitPompeNominal.value = '';
-        if (entreeDebitEstimeText) entreeDebitEstimeText.textContent = '0 m³';
-
-        sortieDebit.value = '';
-        sortieTempsMarchePompes.value = '';
-        sortieDebitPompeNominal.value = '';
-        if (sortieDebitEstimeText) sortieDebitEstimeText.textContent = '0 m³';
-
-        preleveurFrequenceDebit.value = '';
-        preleveurFrequenceTemps.value = '15';
-
-        setEntreeDebimetre(true);
-        setSortieDebimetre(true);
-        setPresencePreleveur(true);
-        state.preleveurType = 'ISO monoflacon dépression';
-        state.preleveurAsservissement = 'débit';
-        if (btnTypeIso && btnTypePeristaltique) {
-          btnTypeIso.className = 'p-2.5 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs flex items-center gap-2 shadow-xs ring-1 ring-indigo-600 cursor-pointer';
-          btnTypePeristaltique.className = 'p-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs flex items-center gap-2 hover:bg-slate-50 cursor-pointer';
+        if (confirm("Réinitialiser le formulaire ?")) {
+          form.reset();
+          state.entreePhoto = null;
+          state.sortiePhoto = null;
+          entreePreviewImg.src = '';
+          sortiePreviewImg.src = '';
+          entreePreviewContainer.classList.add('hidden');
+          sortiePreviewContainer.classList.add('hidden');
+          entreePlaceholder.classList.remove('hidden');
+          sortiePlaceholder.classList.remove('hidden');
+          setEntreeDebimetre(true);
+          setSortieDebimetre(true);
+          setPresencePreleveur(true);
+          dateAutosurveillance.value = today;
+          entreeDate.value = today;
+          sortieDate.value = today;
+          entreeHeure.value = defaultHour;
+          sortieHeure.value = defaultHour;
+          updateVolumetricRatio();
         }
-        if (btnAsservDebit && btnAsservTemps) {
-          btnAsservDebit.className = 'p-2 rounded-xl border border-indigo-600 bg-indigo-50/80 text-indigo-950 font-semibold text-xs text-center shadow-xs ring-1 ring-indigo-600 cursor-pointer';
-          btnAsservTemps.className = 'p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold text-xs text-center hover:bg-slate-50 cursor-pointer';
-          if (boxFreqDebit) boxFreqDebit.classList.remove('hidden');
-          if (boxFreqTemps) boxFreqTemps.classList.add('hidden');
-        }
-
-        // 3. Réinitialiser photos et coordonnées GPS
-        state.entreePhoto = null;
-        state.sortiePhoto = null;
-        entreePhotoInput.value = '';
-        sortiePhotoInput.value = '';
-        entreePreviewImg.src = '';
-        sortiePreviewImg.src = '';
-        entreePreviewContainer.classList.add('hidden');
-        sortiePreviewContainer.classList.add('hidden');
-        entreePlaceholder.classList.remove('hidden');
-        sortiePlaceholder.classList.remove('hidden');
-        entreePhotoGps.value = '';
-        entreeGpsBox.classList.add('hidden');
-        sortiePhotoGps.value = '';
-        sortieGpsBox.classList.add('hidden');
-
-        // 4. Réinitialiser le rapport généré
-        state.lastBlob = null;
-        state.lastFileName = '';
-        state.lastPdfRes = null;
-        if (section4SharePanel) section4SharePanel.classList.add('hidden');
-        if (successModal) successModal.classList.add('hidden');
-
-        // 5. Masquer les erreurs
-        document.querySelectorAll('[id^="err-"]').forEach(el => {
-          el.textContent = '';
-          el.classList.add('hidden');
-        });
-        document.querySelectorAll('.border-rose-500').forEach(el => {
-          el.classList.remove('border-rose-500', 'bg-rose-50/40');
-        });
-        if (validationBanner) validationBanner.classList.add('hidden');
-
-        updateVolumetricRatio();
       });
 
     })();
